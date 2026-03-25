@@ -482,7 +482,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== STATS BANNER ===== */}
-      <section className="bg-[#FAF6ED] border-y border-border">
+      <section className="bg-[#FAF6ED] border-y border-border dark:bg-muted/30">
         <div className="container mx-auto px-4 py-6 sm:py-8">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
             {stats.map((stat, idx) => (
@@ -550,7 +550,8 @@ export default function HomePage() {
       </section>
 
       {/* ===== TODAY'S ASTROLOGY PREDICTION ===== */}
-      <section className="py-16 sm:py-20 lg:py-24 bg-[#FAF6ED] dark:bg-background">
+      <section className="py-20 sm:py-20 lg:py-24 bg-[#FAF6ED] dark:bg-muted/30">
+       <div className="container mx-auto px-4 sm:px-6">
         <h2 className="text-2xl sm:text-3xl font-bold mb-8">
           Today's Astrology Prediction
         </h2>
@@ -582,6 +583,7 @@ export default function HomePage() {
               </div>
             </Link>
           ))}
+        </div>
         </div>
       </section>
 
@@ -622,7 +624,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== CONSULT THE RIGHT ASTROLOGER SECTION ===== */}
-      <section className="py-16 sm:py-20 lg:py-24 bg-[#FAF6ED] dark:bg-background">
+      <section className="py-16 sm:py-20 lg:py-24 bg-[#FAF6ED] dark:bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-10 sm:mb-16">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold">
@@ -670,7 +672,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== TOP ASTROLOGERS SECTION ===== */}
-      <section className="bg-muted/30 py-12 sm:py-16">
+      <section className="bg-muted/30 py-12 sm:py-16 dark:bg-background">
         <div className="container mx-auto px-4">
           <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8 gap-4">
             <div className="text-center sm:text-left">
@@ -753,7 +755,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== CONSULTATION OPTIONS ===== */}
-      <section className="py-16 sm:py-20 bg-[#F9F5EC] dark:bg-background">
+      <section className="py-16 sm:py-20 bg-[#F9F5EC] dark:bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-10 sm:mb-14">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold">
@@ -926,7 +928,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== TESTIMONIALS SECTION ===== */}
-      <section className="bg-[#FAF6ED] py-12 sm:py-16">
+      <section className="bg-[#FAF6ED] py-12 sm:py-16 dark:bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-8 sm:mb-12">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4">
@@ -1032,7 +1034,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== FINAL CTA SECTION ===== */}
-      <section className="py-16 sm:py-20 lg:py-24 bg-[#FAF6ED] dark:bg-background border-t border-border">
+      <section className="py-16 sm:py-20 lg:py-24 bg-[#FAF6ED] dark:bg-muted/30 border-t border-border">
         <div className="container mx-auto px-4 sm:px-6 text-center">
           <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-4 sm:mb-6">
             Align Your Life With{" "}

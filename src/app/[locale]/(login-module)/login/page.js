@@ -18,9 +18,12 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
+  Mail,
+  X,
 } from "lucide-react";
 import { setUserId } from "@/utils/userUtils";
 import { Link } from "@/i18n/navigation";
+import useApi from "@/hooks/useApi";
 
 // Production-grade error messages
 const ERROR_MESSAGES = {
@@ -36,6 +39,7 @@ const ERROR_MESSAGES = {
 
 export default function LoginPage() {
   const router = useRouter();
+  const { apiCall } = useApi();
   const abortControllerRef = useRef(null);
 
   // Form fields
@@ -46,6 +50,13 @@ export default function LoginPage() {
   // State management
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Forgot password state
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotEmailError, setForgotEmailError] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSuccess, setForgotSuccess] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
 
   // Cleanup on unmount
@@ -56,52 +67,6 @@ export default function LoginPage() {
       }
     };
   }, []);
-
-  // Memoized API call with timeout and error handling
-  const apiCall = useCallback(
-
-    async (endpoint, method = "POST", body = null) => {
-      try {
-        // Create abort controller for this request
-        abortControllerRef.current = new AbortController();
-
-        // Set 10-second timeout for the API call 
-        const timeoutId = setTimeout(
-          () => abortControllerRef.current?.abort(),
-          10000
-        );
-
-        const options = {
-          method,
-          headers: {
-            "Content-Type": "application/json",
-          },
-          signal: abortControllerRef.current.signal,
-        };
-
-        if (body && method !== "GET") {
-          options.body = JSON.stringify(body);
-        }
-
-        const response = await fetch(endpoint, options);
-        clearTimeout(timeoutId);
-
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-        return data;
-      } catch (err) {
-        if (err.name === "AbortError") {
-          throw new Error(ERROR_MESSAGES.REQUEST_TIMEOUT);
-        }
-        throw err;
-      }
-    },
-    []
-  );
 
   // Validation functions
   const validateEmail = (email) => {
@@ -135,6 +100,61 @@ export default function LoginPage() {
     }
 
     setFieldErrors(errors);
+  };
+  const handleForgotPassword = async () => {
+    setForgotEmailError("");
+    setForgotSuccess("");
+
+    if (!forgotEmail) {
+      setForgotEmailError("Email is required");
+      return;
+    }
+
+    if (!validateEmail(forgotEmail)) {
+      setForgotEmailError("Please enter a valid email address");
+      return;
+    }
+
+    setForgotLoading(true);
+    console.log("Initiating forgot password process for email:", forgotEmail);
+    try {
+      const response = await apiCall("/api/auth/forgot-password", "POST", {
+        emailId: forgotEmail
+      });
+
+      if (response.message === "User does not exists.") {
+        setError("User not found. Redirecting to register...");
+
+        // wait 2 seconds then redirect
+        setTimeout(() => {
+          router.push("/register");
+        }, 2000);
+
+        return;
+      }
+
+      if (response?.statusCode === 200) {
+        setForgotSuccess(
+          response.message || "Reset link sent! Please check your inbox."
+        );
+
+        setForgotEmail("");
+
+        setTimeout(() => {
+          router.push("/login");
+        }, 2000);
+      } else {
+        setForgotEmailError(
+          response?.message || "Failed to send reset link."
+        );
+      }
+    } catch (err) {
+      setForgotEmailError(
+        err.message || "Network error. Please try again."
+      );
+    } finally {
+      setForgotLoading(false);
+    }
   };
 
   const handleLoginSubmit = async (e) => {
@@ -293,6 +313,103 @@ export default function LoginPage() {
                 )}
               </div>
 
+              {/* Forgot Password link */}
+              <div className="flex justify-end -mt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForgotPassword(!showForgotPassword);
+                    setForgotEmail("");
+                    setForgotEmailError("");
+                    setForgotSuccess("");
+                  }}
+                  className="text-xs text-primary hover:underline font-medium"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+
+              {/* Forgot Password Panel */}
+              {showForgotPassword && (
+                <div className="bg-muted/40 border border-border/60 rounded-xl p-4 space-y-3 animate-in fade-in slide-in-from-top-2">
+
+                  {/* Header */}
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-foreground">
+                      Reset your password
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPassword(false)}
+                      className="text-muted-foreground hover:text-foreground"
+                      aria-label="Close"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-xs text-muted-foreground">
+                    Enter your email address and we&apos;ll send you a reset link.
+                  </p>
+
+                  {/* Content (NOT a form) */}
+                  <div className="space-y-2">
+
+                    {/* Input */}
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="forgot-email"
+                        type="email"
+                        placeholder="Enter your email address"
+                        value={forgotEmail}
+                        onChange={(e) => {
+                          setForgotEmail(e.target.value);
+                          setForgotEmailError("");
+                        }}
+                        aria-label="Forgot password email"
+                        className={`pl-9 bg-background border-border focus:border-primary focus:ring-2 focus:ring-primary/20 text-sm ${forgotEmailError ? "border-destructive" : ""
+                          }`}
+                      />
+                    </div>
+
+                    {/* Error */}
+                    {forgotEmailError && (
+                      <p className="text-xs text-destructive flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {forgotEmailError}
+                      </p>
+                    )}
+
+                    {/* Success */}
+                    {forgotSuccess && (
+                      <p className="text-xs text-green-600 dark:text-green-400 font-medium">
+                        {forgotSuccess}
+                      </p>
+                    )}
+
+                    {/* Button */}
+                    <Button
+                      type="button" // ✅ IMPORTANT
+                      size="sm"
+                      className="w-full"
+                      disabled={forgotLoading}
+                      onClick={handleForgotPassword} // ✅ direct call
+                    >
+                      {forgotLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        "Send Reset Link"
+                      )}
+                    </Button>
+
+                  </div>
+                </div>
+              )}
               {/* Error message */}
               {error && (
                 <div role="alert" className="bg-destructive/10 border border-destructive/30 text-destructive px-4 py-3 rounded-lg text-sm flex items-start gap-2">

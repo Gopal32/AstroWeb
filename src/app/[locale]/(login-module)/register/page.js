@@ -32,6 +32,7 @@ import { userSignIn, setUserId } from "@/utils/userUtils";
 import { Link } from "@/i18n/navigation";
 import { se } from "date-fns/locale";
 import { set } from "date-fns";
+import useApi from "@/hooks/useApi";
 
 // Production-grade error messages
 const ERROR_MESSAGES = {
@@ -58,6 +59,7 @@ const ERROR_MESSAGES = {
 
 export default function RegistrationPage() {
   const router = useRouter();
+  const { apiCall } = useApi();
   const abortControllerRef = useRef(null);
 
   const [activeTab, setActiveTab] = useState("user");
@@ -98,50 +100,6 @@ export default function RegistrationPage() {
       }
     };
   }, []);
-
-  // Memoized API call with timeout and error handling
-  const apiCall = useCallback(
-    async (endpoint, method = "POST", body = null) => {
-      try {
-        // Create abort controller for this request
-        abortControllerRef.current = new AbortController();
-
-        // Set 10-second timeout for the API call 
-        const timeoutId = setTimeout(
-          () => abortControllerRef.current?.abort(),
-          10000
-        );
-
-        const options = {
-          method,
-          headers: {
-            "Content-Type": "application/json",
-          },
-          signal: abortControllerRef.current.signal,
-        };
-
-        if (body && method !== "GET") {
-          options.body = JSON.stringify(body);
-        }
-
-        const response = await fetch(endpoint, options);
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-        return data;
-      } catch (err) {
-        if (err.name === "AbortError") {
-          throw new Error(ERROR_MESSAGES.REQUEST_TIMEOUT);
-        }
-        throw err;
-      }
-    },
-    []
-  );
 
   // Validation functions
   const validateEmail = (email) => {

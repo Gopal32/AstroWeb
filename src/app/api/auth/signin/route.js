@@ -29,7 +29,6 @@ export async function POST(request) {
     );
 
     const data = await response.json();
-    console.log("External API response:", data);
 
     if (data.statusCode == 400) {
       return Response.json(
