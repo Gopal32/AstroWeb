@@ -12,6 +12,22 @@ const SvgComponent = (className = "", ...props) => (
     <g filter="url(#a)">
       <g clipPath="url(#b)">
         <rect width={74.75} height={78} fill="#020928" rx={9.559} />
+        <g fill="#FFFAE6">
+          {/* TOP BAR */}
+          <rect x="22" y="20" width="30" height="3" rx="1.5" />
+
+          {/* CENTER STAND */}
+          <rect x="36" y="23" width="3" height="18" rx="1.5" />
+
+          {/* BASE */}
+          <rect x="28" y="41" width="19" height="3" rx="1.5" />
+
+          {/* LEFT PAN */}
+          <path d="M25 23 L18 32 H32 Z" />
+
+          {/* RIGHT PAN */}
+          <path d="M50 23 L43 32 H57 Z" />
+        </g>
         <path
           fill="#FFFAE6"
           fillRule="evenodd"

@@ -12,6 +12,39 @@ const SvgComponent = (className = "", ...props) => (
     <g filter="url(#a)">
       <g clipPath="url(#b)">
         <rect width={74.75} height={78} fill="#020928" rx={9.559} />
+        <g transform="translate(5,10) scale(1.1)">
+          {/* LEFT KID */}
+          <circle cx="18" cy="18" r="5" fill="#FFFDF4" />
+          <path
+            d="M12 28c0-4 3-7 6-7s6 3 6 7v10H12V28Z"
+            fill="#FFFDF4"
+          />
+
+          {/* MIDDLE KID */}
+          <circle cx="35" cy="16" r="6" fill="#FFFDF4" />
+          <path
+            d="M27 28c0-5 4-8 8-8s8 3 8 8v12H27V28Z"
+            fill="#FFFDF4"
+          />
+
+          {/* RIGHT KID */}
+          <circle cx="55" cy="18" r="5" fill="#FFFDF4" />
+          <path
+            d="M49 28c0-4 3-7 6-7s6 3 6 7v10H49V28Z"
+            fill="#FFFDF4"
+          />
+
+          {/* HAND CONNECTION (IMPORTANT 🔥) */}
+          <path
+            d="M24 30 L27 28 M43 28 L49 30"
+            stroke="#FFFDF4"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+
+          {/* GROUND SHADOW */}
+          <ellipse cx="35" cy="42" rx="28" ry="4" fill="#FFFDF4" opacity="0.15" />
+        </g>
         <path
           fill="#FFFAE6"
           fillRule="evenodd"

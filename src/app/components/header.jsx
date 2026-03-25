@@ -959,6 +959,12 @@ export default function Header() {
                     Register
                   </Button>
                 </Link>
+
+                <Link href="/login">
+                  <Button size="default" className="cursor-pointer">
+                    Login
+                  </Button>
+                </Link>
               </div>
             )}
 

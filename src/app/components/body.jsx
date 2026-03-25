@@ -32,6 +32,7 @@ import {
   Stars,
   Sparkle as SparkleIcon,
 } from "lucide-react";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -62,6 +63,7 @@ import { Link } from "@/i18n/routing";
 
 export default function HomePage() {
   const t = useTranslations("Home");
+  const { resolvedTheme } = useTheme();
   const [activeTab, setActiveTab] = useState("daily");
   const [mounted, setMounted] = useState(false);
 
@@ -413,8 +415,8 @@ export default function HomePage() {
 
   // Helper function to get theme-based icon
   const getThemeIcon = (Light, Dark) => {
-    if (!mounted) return Light;
-    return document.documentElement.classList.contains("dark") ? Dark : Light;
+    if (!mounted) return Light; // avoid hydration issue
+    return resolvedTheme === "dark" ? Dark : Light;
   };
 
   return (
@@ -480,7 +482,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== STATS BANNER ===== */}
-      <section className="bg-muted/30 border-y border-border">
+      <section className="bg-[#FAF6ED] border-y border-border">
         <div className="container mx-auto px-4 py-6 sm:py-8">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
             {stats.map((stat, idx) => (
@@ -545,41 +547,41 @@ export default function HomePage() {
             ))}
           </div>
         </div>
+      </section>
 
-        {/* ===== TODAY'S ASTROLOGY PREDICTION ===== */}
-        <div className="mt-12 sm:mt-16 lg:mt-20">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-8">
-            Today's Astrology Prediction
-          </h2>
+      {/* ===== TODAY'S ASTROLOGY PREDICTION ===== */}
+      <section className="py-16 sm:py-20 lg:py-24 bg-[#FAF6ED] dark:bg-background">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-8">
+          Today's Astrology Prediction
+        </h2>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {zodiacSigns.map((sign, index) => (
-              <Link
-                key={index}
-                href="#"
-                // href={`/horoscope/${sign.name.toLowerCase()}`}
-                className="group"
-              >
-                <div className="space-y-3">
-                  {/* IMAGE CARD */}
-                  <div className="rounded-2xl overflow-hidden shadow-sm transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl">
-                    <Image
-                      src={sign.image}
-                      alt={sign.name}
-                      width={300}
-                      height={200}
-                      className="w-full h-[120px] object-cover"
-                    />
-                  </div>
-
-                  {/* TITLE */}
-                  <p className="text-center font-semibold text-sm sm:text-base group-hover:text-primary transition-colors">
-                    {sign.name}
-                  </p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+          {zodiacSigns.map((sign, index) => (
+            <Link
+              key={index}
+              href="#"
+              // href={`/horoscope/${sign.name.toLowerCase()}`}
+              className="group"
+            >
+              <div className="space-y-3">
+                {/* IMAGE CARD */}
+                <div className="rounded-2xl overflow-hidden shadow-sm transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl">
+                  <Image
+                    src={sign.image}
+                    alt={sign.name}
+                    width={300}
+                    height={200}
+                    className="w-full h-[120px] object-cover"
+                  />
                 </div>
-              </Link>
-            ))}
-          </div>
+
+                {/* TITLE */}
+                <p className="text-center font-semibold text-sm sm:text-base group-hover:text-primary transition-colors">
+                  {sign.name}
+                </p>
+              </div>
+            </Link>
+          ))}
         </div>
       </section>
 
@@ -636,22 +638,34 @@ export default function HomePage() {
               const Icon = getThemeIcon(category.Light, category.Dark);
 
               return (
-                <Link
-                  key={idx}
-                  href="#"
-                  // href={`/astrologers/${category.name.toLowerCase()}`}
-                  className="group block"
-                >
-                  <div className="relative h-[120px] sm:h-[150px] lg:h-[190px] rounded-2xl sm:rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-                    <Icon className="absolute inset-0 w-full h-full object-cover" />
+                <Link key={idx} href="#" className="group block">
+
+                  <div
+                    className="
+                flex items-center justify-center
+                h-[120px] sm:h-[150px] lg:h-[190px]
+                rounded-2xl sm:rounded-3xl
+                overflow-hidden
+
+                bg-card text-card-foreground
+                border border-border
+
+                transition-all duration-300
+                hover:-translate-y-1 hover:shadow-xl
+              "
+                  >
+                    <Icon className="w-14 h-14" />
                   </div>
+
                   <p className="text-center mt-2 text-xs sm:text-sm font-medium">
                     {category.name}
                   </p>
+
                 </Link>
               );
             })}
           </div>
+
         </div>
       </section>
 
@@ -669,7 +683,7 @@ export default function HomePage() {
             </div>
             <Link
               href="#"
-              // href="/astrologers"
+            // href="/astrologers"
             >
               <Button variant="outline" className="gap-2 w-full sm:w-auto">
                 View All <ChevronRight className="h-4 w-4" />
@@ -853,7 +867,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== ASTROSWAY INSIGHTS SECTION ===== */}
-      <section className="py-16 sm:py-20 lg:py-24 bg-[#F9F5EC] dark:bg-background">
+      <section className="py-16 sm:py-20 lg:py-24 dark:bg-background">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-10 sm:mb-16">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold">
@@ -912,7 +926,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== TESTIMONIALS SECTION ===== */}
-      <section className="bg-muted/30 py-12 sm:py-16">
+      <section className="bg-[#FAF6ED] py-12 sm:py-16">
         <div className="container mx-auto px-4">
           <div className="text-center mb-8 sm:mb-12">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4">
