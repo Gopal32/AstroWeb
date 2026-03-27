@@ -1,5 +1,17 @@
+import { cookies } from "next/headers";
+
 export async function POST(request) {
   try {
+    const cookieStore = cookies(); 
+    const UserToken = cookieStore.get("token")?.value;
+
+    if (!UserToken) {
+      return Response.json(
+        { statusCode: 401, message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     const { token } = await request.json();
 
     if (!token) {
@@ -9,31 +21,29 @@ export async function POST(request) {
       );
     }
 
-    // Call external FCM token update API
     const response = await fetch(
       "https://api-users.astrosway.com/Onboarding/fcmToken",
       {
         method: "POST",
         headers: {
-          Authorization: "INTERNAL_AUTH",
+          Authorization: `Bearer ${UserToken}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          token: token,
+          token,
           platform: "web",
         }),
       }
     );
 
     const data = await response.json();
-    console.log("FCM token update response:", data);
 
     if (!response.ok) {
       return Response.json(
         {
           statusCode: response.status,
           message: data.message || "FCM token update failed",
-          data: data,
+          data,
         },
         { status: response.status }
       );
@@ -42,7 +52,7 @@ export async function POST(request) {
     return Response.json({
       statusCode: 200,
       message: "FCM token updated successfully",
-      data: data,
+      data,
     });
   } catch (error) {
     console.error("FCM token update error:", error);

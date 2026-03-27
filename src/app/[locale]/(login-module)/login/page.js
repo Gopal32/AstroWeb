@@ -20,10 +20,12 @@ import {
   EyeOff,
   Mail,
   X,
+  CheckCircle2,
 } from "lucide-react";
 import { setUserId } from "@/utils/userUtils";
 import { Link } from "@/i18n/navigation";
 import useApi from "@/hooks/useApi";
+import { useAuth } from "@/context/AuthProvider";
 
 // Production-grade error messages
 const ERROR_MESSAGES = {
@@ -40,6 +42,7 @@ const ERROR_MESSAGES = {
 export default function LoginPage() {
   const router = useRouter();
   const { apiCall } = useApi();
+  const { refreshAuth } = useAuth();
   const abortControllerRef = useRef(null);
 
   // Form fields
@@ -190,12 +193,15 @@ export default function LoginPage() {
       }
 
       if (response?.statusCode === 200) {
-
-        if (response?.data?.data?.token) {
-          await apiCall("/api/auth/set-token", "POST", { token: response.data.data.token });
+        if (response.data?.token) {
+          await apiCall("/api/auth/set-token", "POST", {
+            token: response.data.token,
+          });
+          await refreshAuth();
         } else {
-          console.warn("No token received on registration");
+          console.warn("No token received on login:", response);
         }
+
         if (response?.data?.userId) {
           setUserId(response.data.userId);
         }

@@ -33,6 +33,7 @@ import { Link } from "@/i18n/navigation";
 import { se } from "date-fns/locale";
 import { set } from "date-fns";
 import useApi from "@/hooks/useApi";
+import { useAuth } from "@/context/AuthProvider";
 
 // Production-grade error messages
 const ERROR_MESSAGES = {
@@ -59,6 +60,7 @@ const ERROR_MESSAGES = {
 
 export default function RegistrationPage() {
   const router = useRouter();
+  const { refreshAuth } = useAuth();
   const { apiCall } = useApi();
   const abortControllerRef = useRef(null);
 
@@ -414,6 +416,7 @@ export default function RegistrationPage() {
         // Save user token if provided
         if (response?.data?.data?.token) {
            await apiCall("/api/auth/set-token", "POST", { token: response.data.data.token });
+           await refreshAuth();
         } else {
           console.warn("No token received on registration");
         }
