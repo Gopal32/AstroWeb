@@ -46,6 +46,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [success, setSuccess] = useState("");
 
   // State management
   const [isLoading, setIsLoading] = useState(false);
@@ -188,21 +189,30 @@ export default function LoginPage() {
         return;
       }
 
-      if (response?.statusCode === 200 && response?.data?.token) {
-        const { token, userId, user } = response.data;
+      if (response?.statusCode === 200) {
 
-        localStorage.setItem("authToken", token);
-        localStorage.setItem("userId", userId);
-
-        if (user) {
-          localStorage.setItem("userData", JSON.stringify(user));
+        if (response?.data?.data?.token) {
+          await apiCall("/api/auth/set-token", "POST", { token: response.data.data.token });
+        } else {
+          console.warn("No token received on registration");
+        }
+        if (response?.data?.userId) {
+          setUserId(response.data.userId);
         }
 
-        // Clear sensitive data
+        setEmail("");
         setPassword("");
+        setFieldErrors({});
+        setError("");
 
-        await setUserId(userId);
-        router.push("/user-dashboard");
+        // Redirect to dashboard/home
+        const locale = localStorage.getItem("locale") || "en";
+
+        setSuccess("🎉 Login successful! Redirecting...");
+
+        setTimeout(() => {
+          router.push(`/${locale}`);
+        }, 2000);
       } else {
         setError(response?.message || ERROR_MESSAGES.SIGNIN_FAILED);
       }
@@ -410,6 +420,13 @@ export default function LoginPage() {
                   </div>
                 </div>
               )}
+              {/* Success message */}
+              {success && (
+                <div className="bg-green-100 border border-green-300 text-green-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>{success}</span>
+                </div>
+              )}
               {/* Error message */}
               {error && (
                 <div role="alert" className="bg-destructive/10 border border-destructive/30 text-destructive px-4 py-3 rounded-lg text-sm flex items-start gap-2">
@@ -422,7 +439,7 @@ export default function LoginPage() {
                 type="submit"
                 size="lg"
                 className="w-full bg-primary font-medium py-3 sm:py-4 rounded-xl text-base"
-                disabled={isLoading || !email || !password}
+                disabled={isLoading || success || !email || !password}
               >
                 {isLoading ? (
                   <>

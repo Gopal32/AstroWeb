@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Check, Loader2, AlertCircle } from "lucide-react";
+import { ChevronRight, Check, Loader2, AlertCircle, Sparkles, Star, MessageCircle, Phone } from "lucide-react";
 import { useTheme } from "next-themes";
 import useApi from "@/hooks/useApi";
 
@@ -34,7 +34,7 @@ const INTENSITY_LABELS = {
 };
 
 const INTENSITY_BARS = [
-  { label: "Emotional Impact", color: "#F59E0B", colors: ["#F59E0B"], values: [0, 10, 25, 60, 80, 100] },
+  { label: "Emotional Impact", color: "#F59E0B", values: [0, 10, 25, 60, 80, 100] },
   { label: "Daily Disruption", color: "#F59E0B", values: [0, 10, 20, 50, 75, 100] },
   { label: "Relationship Strain", color: "#8B5CF6", values: [0, 5, 15, 45, 70, 95] },
   { label: "Duration of Issue", color: "#06B6D4", values: [0, 5, 15, 35, 60, 90] },
@@ -46,7 +46,7 @@ const DISCOVERY_OPTIONS = [
   "YouTube",
   "Friend or Family",
   "News Article / Blog",
-  "Other / Divine Calling ✨",
+  "Other / Divine Calling",
 ];
 
 const STEPS = [
@@ -73,6 +73,7 @@ export default function JourneyPage() {
   const [selections, setSelections] = useState({ issue: "", intensity: 3, discovery: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [recommendedAstros, setRecommendedAstros] = useState([]);
 
   /* handlers */
   const handleIssueSelect = (v) => setSelections((p) => ({ ...p, issue: v }));
@@ -90,15 +91,26 @@ export default function JourneyPage() {
     setIsLoading(true);
     setError("");
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+      // Step 1: Submit journey answers
       const response = await apiCall("/api/user/journey", "POST", {
         ques1: selections.issue,
         ques2: selections.intensity,
         ques3: selections.discovery,
-        token,
       });
-      if (!response.ok) throw new Error(`Server responded with ${response.status}`);
-      router.push("/user-dashboard");
+
+      if (response?.statusCode !== 200) {
+        throw new Error(response?.message || `Server responded with status ${response?.statusCode}`);
+      }
+
+      // Step 2: Fetch recommended astrologers
+      const recommendationResponse = await apiCall("/api/astrologer/recommended-astro", "GET");
+
+      if (recommendationResponse?.statusCode === 200 && Array.isArray(recommendationResponse?.data)) {
+        setRecommendedAstros(recommendationResponse.data);
+      }
+
+      // Step 3: Advance to Step 4 to show matches (do NOT navigate to dashboard yet)
+      setCurrentStep(4);
     } catch (err) {
       console.error("Journey submission error:", err);
       setError(
@@ -132,7 +144,7 @@ export default function JourneyPage() {
     textMuted: isDark ? "#94a3b8" : "#6b7280",
     textFaint: isDark ? "#64748b" : "#9ca3af",
     stepTagBg: isDark ? "#1e1a3a" : "#fffbeb",
-    stepTagBorder: isDark ? "#F59E0B" : "#F59E0B",
+    stepTagBorder: "#F59E0B",
     stepTagColor: "#F59E0B",
     issueCardBg: isDark ? "#13102a" : "#fafafa",
     issueCardBdr: isDark ? "#2a2560" : "#e5e7eb",
@@ -145,6 +157,10 @@ export default function JourneyPage() {
     circleOff: isDark ? "#1e1a3a" : "#ede9fe",
     circleDone: "#7C3AED",
     circleActive: "#F59E0B",
+    astroBg: isDark ? "#13102a" : "#fafafa",
+    astroBorder: isDark ? "#2a2560" : "#e9e6f8",
+    tagBg: isDark ? "rgba(124,58,237,0.2)" : "rgba(124,58,237,0.1)",
+    tagColor: isDark ? "#a78bfa" : "#7C3AED",
   };
 
   /* sub-label in sidebar */
@@ -156,7 +172,7 @@ export default function JourneyPage() {
     return step.subtitle;
   };
 
-  const progressPct = ((currentStep - 1) / 3) * 100;
+  const progressPct = ((currentStep - 1) / (STEPS.length - 1)) * 100;
 
   /* ─── render ─── */
   return (
@@ -239,7 +255,6 @@ export default function JourneyPage() {
             {/* ── TOP PROGRESS BAR ── */}
             <div style={{ marginBottom: "20px" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
-                {/* Step tag pill */}
                 <span style={{
                   display: "inline-block", padding: "5px 16px", borderRadius: "20px",
                   background: t.stepTagBg, border: `1px solid ${t.stepTagBorder}`,
@@ -248,11 +263,9 @@ export default function JourneyPage() {
                   {STEPS[currentStep - 1]?.tag}
                 </span>
                 <span style={{ fontSize: "13px", color: t.textMuted, fontWeight: 500 }}>
-                  Step {currentStep} of 4
+                  Step {currentStep} of {STEPS.length}
                 </span>
               </div>
-
-              {/* Bar */}
               <div style={{ height: "6px", borderRadius: "3px", background: t.progressTrack, overflow: "hidden" }}>
                 <div style={{
                   height: "100%",
@@ -264,8 +277,8 @@ export default function JourneyPage() {
               </div>
             </div>
 
-            {/* Step meta  */}
-            <p style={{ margin: "0 0 2px", fontSize: "13px", color: t.textMuted }}>Step {currentStep} of 4</p>
+            {/* Step meta */}
+            <p style={{ margin: "0 0 2px", fontSize: "13px", color: t.textMuted }}>Step {currentStep} of {STEPS.length}</p>
 
             {/* ── STEP 1: ISSUE SELECTION ── */}
             {currentStep === 1 && (
@@ -275,7 +288,7 @@ export default function JourneyPage() {
                   <em style={{ fontStyle: "italic", color: "#F59E0B" }}>your soul?</em>
                 </h1>
                 <p style={{ margin: "0 0 24px", fontSize: "14px", color: t.textMuted, lineHeight: 1.5 }}>
-                  Select the area of life where you seek divine guidance. You may select multiple.
+                  Select the area of life where you seek divine guidance.
                 </p>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px", marginBottom: "28px" }}>
                   {LIFE_ISSUES.map((issue) => {
@@ -321,8 +334,6 @@ export default function JourneyPage() {
                 <p style={{ margin: "0 0 20px", fontSize: "14px", color: t.textMuted }}>
                   Rate from 0 (no impact) to 5 (severe). This guides our recommendation.
                 </p>
-
-                {/* Big number */}
                 <div style={{ display: "flex", alignItems: "center", gap: "18px", marginBottom: "24px" }}>
                   <span style={{ fontSize: "68px", fontWeight: 800, color: "#F59E0B", lineHeight: 1 }}>
                     {selections.intensity}
@@ -336,8 +347,6 @@ export default function JourneyPage() {
                     </p>
                   </div>
                 </div>
-
-                {/* Selector circles */}
                 <div style={{ display: "flex", gap: "10px", marginBottom: "28px", flexWrap: "wrap" }}>
                   {[0, 1, 2, 3, 4, 5].map((n) => {
                     const active = selections.intensity === n;
@@ -362,8 +371,6 @@ export default function JourneyPage() {
                     );
                   })}
                 </div>
-
-                {/* Impact bars */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "16px" }}>
                   {INTENSITY_BARS.map((bar) => {
                     const pct = bar.values[selections.intensity];
@@ -406,7 +413,6 @@ export default function JourneyPage() {
                           background: sel ? (isDark ? "rgba(245,158,11,0.1)" : "#fffbeb") : t.discoCardBg,
                         }}
                       >
-                        {/* Radio circle */}
                         <span style={{
                           width: "18px", height: "18px", borderRadius: "50%", flexShrink: 0,
                           display: "flex", alignItems: "center", justifyContent: "center",
@@ -425,45 +431,192 @@ export default function JourneyPage() {
               </>
             )}
 
-            {/* Error */}
+            {/* ── STEP 4: YOUR MATCH ── */}
+            {currentStep === 4 && (
+              <>
+                <h1 style={{ fontSize: "clamp(22px,3vw,30px)", fontWeight: 800, lineHeight: 1.2, margin: "4px 0 6px", color: t.text, display: "flex", alignItems: "center", gap: "10px" }}>
+                  <Sparkles size={26} color="#F59E0B" />
+                  <span>Your{" "}<em style={{ fontStyle: "italic", color: "#F59E0B" }}>cosmic matches</em></span>
+                </h1>
+                <p style={{ margin: "0 0 24px", fontSize: "14px", color: t.textMuted, lineHeight: 1.5 }}>
+                  Based on your journey, our AI has handpicked these astrologers for you.
+                </p>
+
+                {recommendedAstros.length === 0 ? (
+                  <div style={{
+                    padding: "24px", borderRadius: "12px", textAlign: "center",
+                    background: t.astroBg, border: `1px solid ${t.astroBorder}`, marginBottom: "28px",
+                  }}>
+                    <p style={{ margin: 0, fontSize: "15px", color: t.textMuted }}>
+                      No specific recommendations at this moment. Explore all astrologers on the dashboard.
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "28px" }}>
+                    {recommendedAstros.map((astro) => {
+                      const totalOrders =
+                        (astro.order?.totalChat || 0) +
+                        (astro.order?.totalCall || 0) +
+                        (astro.order?.totalVideo || 0);
+                      const starCount = Math.round(astro.rating || 0);
+
+                      return (
+                        <div
+                          key={astro.astroId}
+                          style={{
+                            display: "flex", gap: "16px", alignItems: "flex-start",
+                            padding: "18px 20px", borderRadius: "14px",
+                            background: t.astroBg, border: `1.5px solid ${t.astroBorder}`,
+                          }}
+                        >
+                          {/* Photo + online dot */}
+                          <div style={{ position: "relative", flexShrink: 0 }}>
+                            <img
+                              src={astro.photo}
+                              alt={astro.name}
+                              style={{
+                                width: "70px", height: "70px", borderRadius: "50%",
+                                objectFit: "cover", border: "2px solid #F59E0B",
+                              }}
+                            />
+                            <span style={{
+                              position: "absolute", bottom: "2px", right: "2px",
+                              width: "12px", height: "12px", borderRadius: "50%",
+                              background: astro.status === "online" ? "#22c55e" : "#94a3b8",
+                              border: `2px solid ${t.astroBg}`,
+                            }} />
+                          </div>
+
+                          {/* Info */}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            {/* Name + status badge */}
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "6px" }}>
+                              <p style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: t.text }}>
+                                {astro.name.trim()}
+                              </p>
+                              <span style={{
+                                fontSize: "11px", fontWeight: 700, padding: "3px 10px", borderRadius: "20px",
+                                background: astro.status === "online" ? "rgba(34,197,94,0.15)" : "rgba(148,163,184,0.15)",
+                                color: astro.status === "online" ? "#22c55e" : "#94a3b8",
+                              }}>
+                                {astro.status}
+                              </span>
+                            </div>
+
+                            {/* Rating + sessions */}
+                            <div style={{ display: "flex", alignItems: "center", gap: "4px", margin: "3px 0 6px" }}>
+                              {Array.from({ length: 5 }, (_, i) => (
+                                <Star
+                                  key={i}
+                                  size={12}
+                                  fill={i < starCount ? "#F59E0B" : "none"}
+                                  color={i < starCount ? "#F59E0B" : t.textFaint}
+                                />
+                              ))}
+                              <span style={{ color: t.textFaint, fontSize: "11px", marginLeft: "4px" }}>{totalOrders} sessions</span>
+                            </div>
+
+                            {/* Description (2-line clamp) */}
+                            <p style={{
+                              margin: "0 0 8px", fontSize: "12px", color: t.textMuted, lineHeight: 1.5,
+                              display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
+                            }}>
+                              {astro.description}
+                            </p>
+
+                            {/* Expertise tags */}
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "10px" }}>
+                              {astro.expertise.map((e) => (
+                                <span key={e} style={{
+                                  fontSize: "10px", fontWeight: 600, padding: "3px 8px", borderRadius: "20px",
+                                  background: t.tagBg, color: t.tagColor, textTransform: "capitalize",
+                                }}>
+                                  {e}
+                                </span>
+                              ))}
+                            </div>
+
+                            {/* Pricing + experience */}
+                            <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                              <span style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", color: t.textMuted }}>
+                                <MessageCircle size={12} /> ₹{astro.chatNormalPrice}/min
+                              </span>
+                              <span style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", color: t.textMuted }}>
+                                <Phone size={12} /> ₹{astro.ivrNormalPrice}/min
+                              </span>
+                              <span style={{ fontSize: "12px", color: t.textFaint }}>
+                                {astro.experience} yrs exp
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Go to Dashboard */}
+                <button
+                  onClick={() => router.push("/")}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "8px",
+                    padding: "13px 28px", borderRadius: "10px",
+                    background: "#F59E0B", color: "#1a1035",
+                    fontSize: "15px", fontWeight: 700, border: "none",
+                    cursor: "pointer", transition: "all 0.2s ease",
+                  }}
+                >
+                  <span>Go to Dashboard</span>
+                  <ChevronRight size={18} />
+                </button>
+              </>
+            )}
+
+            {/* Error banner */}
             {error && (
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 16px", borderRadius: "8px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", marginBottom: "16px" }}>
+              <div style={{
+                display: "flex", alignItems: "center", gap: "8px",
+                padding: "10px 16px", borderRadius: "8px", marginBottom: "16px",
+                background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
+              }}>
                 <AlertCircle size={16} color="#f87171" />
                 <span style={{ fontSize: "13px", color: "#f87171" }}>{error}</span>
               </div>
             )}
 
-            {/* Actions */}
-            <div style={{ display: "flex", alignItems: "center", gap: "20px", marginTop: "4px" }}>
-              <button
-                onClick={handleContinue}
-                disabled={!canContinue() || isLoading}
-                style={{
-                  display: "flex", alignItems: "center", gap: "8px",
-                  padding: "13px 28px", borderRadius: "10px",
-                  background: "#F59E0B", color: "#1a1035",
-                  fontSize: "15px", fontWeight: 700, border: "none",
-                  cursor: canContinue() && !isLoading ? "pointer" : "not-allowed",
-                  opacity: canContinue() && !isLoading ? 1 : 0.5,
-                  transition: "all 0.2s ease",
-                }}
-              >
-                {isLoading ? (
-                  <><Loader2 size={18} className="animate-spin" /><span>Submitting...</span></>
-                ) : (
-                  <><span>Continue</span><ChevronRight size={18} /></>
-                )}
-              </button>
-
-              {currentStep < 3 && (
+            {/* Actions (steps 1–3 only) */}
+            {currentStep < 4 && (
+              <div style={{ display: "flex", alignItems: "center", gap: "20px", marginTop: "4px" }}>
                 <button
-                  onClick={handleSkip}
-                  style={{ background: "none", border: "none", color: t.textMuted, fontSize: "14px", cursor: "pointer", textDecoration: "underline" }}
+                  onClick={handleContinue}
+                  disabled={!canContinue() || isLoading}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "8px",
+                    padding: "13px 28px", borderRadius: "10px",
+                    background: "#F59E0B", color: "#1a1035",
+                    fontSize: "15px", fontWeight: 700, border: "none",
+                    cursor: canContinue() && !isLoading ? "pointer" : "not-allowed",
+                    opacity: canContinue() && !isLoading ? 1 : 0.5,
+                    transition: "all 0.2s ease",
+                  }}
                 >
-                  Skip this step
+                  {isLoading ? (
+                    <><Loader2 size={18} className="animate-spin" /><span>Submitting...</span></>
+                  ) : (
+                    <><span>Continue</span><ChevronRight size={18} /></>
+                  )}
                 </button>
-              )}
-            </div>
+
+                {currentStep < 3 && (
+                  <button
+                    onClick={handleSkip}
+                    style={{ background: "none", border: "none", color: t.textMuted, fontSize: "14px", cursor: "pointer", textDecoration: "underline" }}
+                  >
+                    Skip this step
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </main>

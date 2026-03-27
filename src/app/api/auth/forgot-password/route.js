@@ -22,7 +22,7 @@ export async function POST(request) {
         });
 
         const data = await response.json();
-
+        console.log("Response from forgot password API:", data);
         if (data.statusCode == 400) {
             return Response.json(
                 {

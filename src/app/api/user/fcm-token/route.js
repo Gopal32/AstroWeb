@@ -1,10 +1,10 @@
 export async function POST(request) {
   try {
-    const { token, platform } = await request.json();
+    const { token } = await request.json();
 
-    if (!token || !platform) {
+    if (!token) {
       return Response.json(
-        { statusCode: 400, message: "Token and platform are required" },
+        { statusCode: 400, message: "Token is required" },
         { status: 400 }
       );
     }
@@ -20,12 +20,13 @@ export async function POST(request) {
         },
         body: JSON.stringify({
           token: token,
-          platform: platform,
+          platform: "web",
         }),
       }
     );
 
     const data = await response.json();
+    console.log("FCM token update response:", data);
 
     if (!response.ok) {
       return Response.json(

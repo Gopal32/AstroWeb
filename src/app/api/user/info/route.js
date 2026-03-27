@@ -1,51 +1,46 @@
-export async function GET(request) {
+import { cookies } from "next/headers";
+
+export async function GET() {
   try {
-    // Extract token from Authorization header
-    const authHeader = request.headers.get("authorization");
-    
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value; 
+    if (!token) {
       return Response.json(
-        { statusCode: 401, message: "Unauthorized - Missing or invalid token" },
+        { statusCode: 401, message: "Unauthorized" },
         { status: 401 }
       );
     }
 
-    const token = authHeader.substring(7); // Remove "Bearer " prefix
-
-    // Call external user info API
     const response = await fetch(
       "https://api-users.astrosway.com/Onboarding/info",
       {
         method: "GET",
         headers: {
-          Authorization: token,
-          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
+        cache: "no-store", // ✅ IMPORTANT (avoid stale data)
       }
     );
 
-    const data = await response.json();
-
+    // ✅ Handle non-200 responses
     if (!response.ok) {
       return Response.json(
         {
           statusCode: response.status,
-          message: data.message || "Failed to fetch user info",
-          data: data,
+          message: "Failed to fetch user info",
         },
         { status: response.status }
       );
     }
 
-    return Response.json({
-      statusCode: 200,
-      message: "User info fetched successfully",
-      data: data,
-    });
+    const data = await response.json();
+
+    return Response.json(data);
   } catch (error) {
-    console.error("User info error:", error);
+    console.error("Error fetching user info:", error);
+
     return Response.json(
-      { statusCode: 500, message: "Failed to fetch user info" },
+      { statusCode: 500, message: "Internal Server Error" },
       { status: 500 }
     );
   }

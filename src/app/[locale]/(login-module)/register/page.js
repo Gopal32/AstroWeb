@@ -91,6 +91,7 @@ export default function RegistrationPage() {
   const [isLoadingSending, setIsLoadingSending] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [success, setSuccess] = useState("");
 
   // Cleanup on unmount
   useEffect(() => {
@@ -181,13 +182,11 @@ export default function RegistrationPage() {
       try {
         setOtpChecking(true);
         setOtpError("");
-        console.log("Attempting to verify OTP:", otp, "for userId:", userId);
+
         const response = await apiCall("/api/auth/verify-otp", "POST", {
           userId: userId,
           otp: otp,   // ✅ correct key
         });
-
-        console.log("OTP verification response:", response);
 
         if (response?.statusCode === 200) {
           setOtpVerified(true);
@@ -248,7 +247,6 @@ export default function RegistrationPage() {
       });
 
       const data = await response.json();
-      console.log("Email verification response:", data);
 
       if (data.exists) {
         setError("This email is already registered. Please use a different email or try logging in.");
@@ -270,9 +268,7 @@ export default function RegistrationPage() {
   // Auto-verify email when valid email and fullName are entered
   const handleEmailChange = async (value) => {
     setEmail(value);
-    console.log("Email changed:", value);
     validateField("email", value);
-    console.log("Email validation error:", fieldErrors.email, validateEmail(value));
 
     // Auto-verify if email is valid and fullName is present
     if (validateEmail(value) && fullName.trim() && !emailVerified) {
@@ -282,8 +278,6 @@ export default function RegistrationPage() {
         const response = await apiCall("/api/auth/check-email", "POST", {
           email: value,
         });
-        console.log("Auto email check response:", response);
-
         if (response?.exists) {
           setFieldErrors((prev) => ({
             ...prev,
@@ -332,13 +326,10 @@ export default function RegistrationPage() {
         setIsLoadingSending(false);
         return;
       }
-      console.log("entered phone number:", whatsappPhone);
       // Call API to send the otp
       const response = await apiCall("/api/auth/send-otp", "POST", {
         phone: whatsappPhone,
       });
-
-      console.log("Phone validation response:", response);
 
       if (response?.statusCode === 200) {
         setPhoneValidated(true);
@@ -370,7 +361,6 @@ export default function RegistrationPage() {
         setPhoneValidated(true);
         setOtpSent(true);
         setOtpCountdown(60); // Start 60-second countdown
-        console.log("Proceeding with OTP despite API error");
       }
     } finally {
       setIsLoading(false);
@@ -409,15 +399,7 @@ export default function RegistrationPage() {
 
     setIsLoading(true);
     const cleanedPhone = whatsappPhone.replace(/^0+/, "");
-    console.log("Submitting registration with data:", {
-      fullName,
-      email,
-      password,
-      whatsappPhone: cleanedPhone,
-      code: "91"
-    });
-
-
+   
     try {
       // Call signup API with all user data
       const response = await apiCall("/api/auth/signup", "POST", {
@@ -428,35 +410,12 @@ export default function RegistrationPage() {
         code: "91", // Country code
       });
 
-      console.log("Registration response:", response);
-
       if (response?.statusCode === 200) {
         // Save user token if provided
-        if (response?.data?.token) {
-          localStorage.setItem("authToken", response.data.token);
-        }
-
-        // Save user ID
-        if (response?.data?.userId) {
-          localStorage.setItem("userId", response.data.userId);
-        }
-
-        // Save user data if provided
-        if (response?.data?.user) {
-          localStorage.setItem("userData", JSON.stringify(response.data.user));
-        }
-
-        // Register FCM token for push notifications
-        try {
-          if ("serviceWorker" in navigator) {
-            const registration = await navigator.serviceWorker.ready;
-            if (registration && registration.pushManager) {
-              // FCM token registration logic here if needed
-            }
-          }
-        } catch (fcmErr) {
-          console.warn("FCM registration warning:", fcmErr);
-          // Don't fail registration if FCM fails
+        if (response?.data?.data?.token) {
+           await apiCall("/api/auth/set-token", "POST", { token: response.data.data.token });
+        } else {
+          console.warn("No token received on registration");
         }
 
         // Clear sensitive data
@@ -465,9 +424,13 @@ export default function RegistrationPage() {
         setOtp("");
 
         setError("");
-        // Redirect to dashboard/home
-        const locale = localStorage.getItem("locale") || "en";
-        router.push(`/${locale}`);
+
+        setSuccess("🎉 Registration successful! Redirecting...🎉");
+
+        // delay + redirect
+        setTimeout(() => {
+          router.push("/journey");
+        }, 2000); // 2 sec delay
       } else {
         setError(
           response?.message || ERROR_MESSAGES.REGISTRATION_FAILED
@@ -500,8 +463,8 @@ export default function RegistrationPage() {
             <button
               onClick={() => setActiveTab("user")}
               className={`flex-1 py-4 px-4 sm:px-6 text-center font-medium transition-all duration-300 flex flex-col items-center gap-2 sm:gap-1 ${activeTab === "user"
-                  ? "bg-primary text-primary-foreground shadow-lg"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                ? "bg-primary text-primary-foreground shadow-lg"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 }`}
             >
               <Users className="w-5 h-5 sm:w-4 sm:h-4" />
@@ -833,21 +796,21 @@ export default function RegistrationPage() {
                           size="sm"
                           className="h-8 text-xs px-2 text-primary hover:bg-primary/90 dark:hover:bg-primary/90"
                         >
-                         {isLoadingSending ? (
-                          <>
-                            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                            Sending
-                          </>
-                        ) : otpCountdown > 0 ? (
-                          <>
-                            <span>{otpCountdown}s</span>
-                          </>
-                        ) : (
-                          <>
-                            <Phone className="w-3 h-3 mr-1" />
-                            Resend
-                          </>
-                        )}
+                          {isLoadingSending ? (
+                            <>
+                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                              Sending
+                            </>
+                          ) : otpCountdown > 0 ? (
+                            <>
+                              <span>{otpCountdown}s</span>
+                            </>
+                          ) : (
+                            <>
+                              <Phone className="w-3 h-3 mr-1" />
+                              Resend
+                            </>
+                          )}
                         </Button>
                       )}
 
@@ -900,6 +863,13 @@ export default function RegistrationPage() {
                       Privacy Policy
                     </Link>
                   </label>
+                </div>
+              )}
+              {/* Success Message */}
+              {success && (
+                <div className="bg-green-100 border border-green-300 text-green-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>{success}</span>
                 </div>
               )}
 

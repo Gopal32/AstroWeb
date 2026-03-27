@@ -1,6 +1,17 @@
+import { cookies } from "next/headers";
+
 export async function POST(request) {
   try {
-    let { ques1, ques2, ques3, token } = await request.json();
+    let { ques1, ques2, ques3 } = await request.json();
+
+    const token = cookies().get("token")?.value;
+    
+        if (!token) {
+          return Response.json(
+            { statusCode: 401, message: "Unauthorized" },
+            { status: 401 }
+          );
+        }
 
     // Validate input
     if (!ques1 || !ques2 || !ques3) {
@@ -32,7 +43,6 @@ export async function POST(request) {
     );
 
     const data = await response.json();
-    console.log("External API response:", data);
 
     // Handle error from external API
     if (!response.ok || data.statusCode === 400) {

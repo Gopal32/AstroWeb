@@ -7,6 +7,7 @@ import Footer from "../components/footer";
 import { Toaster } from "@/components/ui/sonner";
 import ClarityScript from "../components/analytics/ClarityScript";
 import { GoogleTagManager } from "@next/third-parties/google";
+import { AuthProvider } from "@/context/AuthProvider";
 // import { GoogleAnalytics } from "@next/third-parties/google";
 
 export const metadata = {
@@ -41,10 +42,12 @@ export default async function LocaleLayout({ children, params }) {
           disableTransitionOnChange
         >
           <NextIntlClientProvider locale={locale} messages={messages}>
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Toaster />
-            <Footer />
+            <AuthProvider>
+              <Header />
+              <main className="flex-1">{children}</main>
+              <Toaster />
+              <Footer />
+            </AuthProvider>
           </NextIntlClientProvider>
         </ThemeProvider>
       </body>

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Menu,
@@ -9,7 +9,6 @@ import {
   Settings,
   LogOut,
   Home,
-  ChevronDown,
   Sparkles,
   Star,
   Heart,
@@ -21,21 +20,15 @@ import {
   Gem,
   Zap,
   Trophy,
-  Coffee,
   Globe,
-  Lock,
   Telescope,
   Infinity,
   Feather,
-  Cpu,
   Brain,
-  Eye,
-  Leaf,
   Wind,
   Droplet,
   Flame,
   Mountain,
-  Cloud,
   Crown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -56,28 +49,11 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import AppIcon from "@/components/icons/app-icon";
 import LocaleSwitcher from "@/components/lang-switcher";
 import ModeToggle from "@/components/mode-toggle";
 import { cn } from "@/lib/utils";
-
-/* ASTRO utils */
-import {
-  getAstroToken,
-  getAstroId,
-  clearAstroAuthData,
-  fetchAstroOnboardingInfo,
-  AUTH_EVENT as ASTRO_AUTH_EVENT,
-} from "@/utils/astroUtils";
-
-/* USER utils */
-import {
-  getUserToken,
-  clearUserAuthData,
-  fetchUserProfileFromAPI,
-  USER_AUTH_EVENT,
-} from "@/utils/userUtils";
 import Image from "next/image";
+import { useAuth } from "@/context/AuthProvider";
 
 // ===== Beautiful Mega Menu Content =====
 
@@ -559,133 +535,26 @@ const ListItem = ({
 };
 
 export default function Header() {
+  const { user, loading, isAuthenticated, refreshAuth } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [role, setRole] = useState(null);
-  const [userData, setUserData] = useState(null);
-
-  const readJson = (key) => {
-    try {
-      const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  };
 
   const deriveInitials = (name) =>
     name && name.trim().length ? name.trim().slice(0, 1).toUpperCase() : "U";
 
-  const hydrateFromStorageOrAPI = useCallback(async () => {
-    const astroToken = getAstroToken();
-    const astroId = getAstroId();
-    const userToken = getUserToken();
-
-    let currentRole = null;
-    if (astroToken && astroId) currentRole = "astro";
-    else if (userToken) currentRole = "user";
-
-    setRole(currentRole);
-
-    if (!currentRole) {
-      setIsLoggedIn(false);
-      setUserData(null);
-      return;
-    }
-
-    setIsLoggedIn(true);
-
-    if (currentRole === "astro") {
-      let profile = readJson("astroProfile");
-      if (!profile) {
-        const apiProfile = await fetchAstroOnboardingInfo();
-        if (apiProfile) {
-          profile = {
-            name: apiProfile.fullName || apiProfile.name || "Astrologer",
-            profilePic: apiProfile.profilePic || "",
-          };
-          try {
-            localStorage.setItem("astroProfile", JSON.stringify(profile));
-          } catch {}
-        }
-      } else {
-        profile = {
-          name: profile.fullName || profile.name || "Astrologer",
-          profilePic: profile.profilePic || "",
-        };
-      }
-      setUserData(profile || { name: "Astrologer", profilePic: "" });
-      return;
-    }
-
-    if (currentRole === "user") {
-      let profile = readJson("userProfile") || readJson("userDetails");
-
-      if (!profile?.fullName && userToken) {
-        const api = await fetchUserProfileFromAPI();
-        if (api) {
-          profile = {
-            fullName: api.fullName || api.name || "User",
-            profilePic: api.profilePic || "",
-          };
-          try {
-            localStorage.setItem("userProfile", JSON.stringify(profile));
-          } catch {}
-        }
-      } else if (profile) {
-        profile = {
-          fullName: profile.fullName || profile.name || "User",
-          profilePic: profile.profilePic || "",
-        };
-      }
-
-      setUserData(
-        profile
-          ? { name: profile.fullName, profilePic: profile.profilePic }
-          : { name: "User", profilePic: "" },
-      );
-    }
-  }, []);
-
-  useEffect(() => {
-    hydrateFromStorageOrAPI();
-  }, [hydrateFromStorageOrAPI]);
-
-  useEffect(() => {
-    const handler = () => hydrateFromStorageOrAPI();
-    window.addEventListener("astroAuthChange", handler);
-    window.addEventListener("userAuthChange", handler);
-    return () => {
-      window.removeEventListener("astroAuthChange", handler);
-      window.removeEventListener("userAuthChange", handler);
-    };
-  }, [hydrateFromStorageOrAPI]);
-
-  useEffect(() => {
-    hydrateFromStorageOrAPI();
-  }, [pathname, hydrateFromStorageOrAPI]);
-
-  const handleLogout = () => {
-    if (role === "astro") {
-      clearAstroAuthData();
-    } else if (role === "user") {
-      clearUserAuthData();
-    }
-    setIsLoggedIn(false);
-    setUserData(null);
-    setRole(null);
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    await refreshAuth();
     router.push("/");
   };
 
+  const role = user?.role ?? null;
   const homeHref = role === "user" ? "/profile" : "/home";
   const settingsHref = role === "user" ? "/user-settings" : "/astro-settings";
   const subtitle =
     role === "user" ? "Astroway Member" : "Professional Astrologer";
-  const displayName =
-    userData?.name || (role === "user" ? "User" : "Astrologer");
+  const displayName = user?.fullName || "User";
 
   return (
     <header className="w-full bg-background border-b border-border shadow-sm sticky top-0 z-50">
@@ -874,13 +743,11 @@ export default function Header() {
                         </NavigationMenuContent>
                       </>
                     ) : (
-                      <Link href={item.href} legacyBehavior passHref>
-                        <NavigationMenuLink
-                          className={navigationMenuTriggerStyle()}
-                        >
+                      <NavigationMenuLink asChild>
+                        <Link href={item.href} className={navigationMenuTriggerStyle()}>
                           {item.label}
-                        </NavigationMenuLink>
-                      </Link>
+                        </Link>
+                      </NavigationMenuLink>
                     )}
                   </NavigationMenuItem>
                 ))}
@@ -895,7 +762,7 @@ export default function Header() {
               <LocaleSwitcher />
             </div>
 
-            {isLoggedIn ? (
+            {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -904,7 +771,7 @@ export default function Header() {
                   >
                     <Avatar className="h-8 w-8">
                       <AvatarImage
-                        src={userData?.profilePic || ""}
+                        src={user?.profilePic || ""}
                         alt={displayName}
                       />
                       <AvatarFallback className="bg-gradient-to-br from-purple-600 to-pink-600 text-white">
@@ -954,17 +821,13 @@ export default function Header() {
               </DropdownMenu>
             ) : (
               <div className="flex items-center gap-2">
-                <Link href="/register">
-                  <Button size="default" className="cursor-pointer">
-                    Register
-                  </Button>
-                </Link>
+                <Button asChild>
+  <Link href="/register">Register</Link>
+</Button>
 
-                <Link href="/login">
-                  <Button size="default" className="cursor-pointer">
-                    Login
-                  </Button>
-                </Link>
+<Button asChild>
+  <Link href="/login">Login</Link>
+</Button>
               </div>
             )}
 
@@ -1196,15 +1059,18 @@ export default function Header() {
                 <LocaleSwitcher />
               </div>
 
-              {!isLoggedIn && (
+              {!isAuthenticated && (
                 <div className="flex flex-col gap-2 pt-4 border-t border-border">
-                  <Link href="/register" onClick={() => setIsMenuOpen(false)}>
-                    <Button className="w-full cursor-pointer">Register</Button>
-                  </Link>
+                  <Button asChild className="w-full cursor-pointer">
+                    <Link href="/register" onClick={() => setIsMenuOpen(false)}>Register</Link>
+                  </Button>
+                  <Button asChild variant="outline" className="w-full cursor-pointer">
+                    <Link href="/login" onClick={() => setIsMenuOpen(false)}>Login</Link>
+                  </Button>
                 </div>
               )}
 
-              {isLoggedIn && (
+              {isAuthenticated && (
                 <div className="pt-4 border-t border-border space-y-2">
                   <Link
                     href={homeHref}
