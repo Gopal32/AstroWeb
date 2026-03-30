@@ -3,26 +3,30 @@ const withNextIntl = createNextIntlPlugin();
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    images: {
+  images: {
+    // ✅ remote patterns
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'astro-ways.s3.ap-south-1.amazonaws.com',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "astro-ways.s3.ap-south-1.amazonaws.com",
+        pathname: "/**",
       },
       {
-        protocol: 'https',
-        hostname: 's3.ap-south-1.amazonaws.com',
-        // this one shows up in your payload:
-        // https://s3.ap-south-1.amazonaws.com/astro-ways.ai/UAT/ASTRO/...
-        pathname: '/astro-ways.ai/**',
+        protocol: "https",
+        hostname: "s3.ap-south-1.amazonaws.com",
+        pathname: "/astro-ways.ai/**",
+      },
+      {
+        // ✅ ADD THIS (your error domain)
+        protocol: "https",
+        hostname: "astrosway-service.s3.amazonaws.com",
+        pathname: "/**",
       },
     ],
-    // OPTIONAL: if you’re doing a full static export and don’t want optimization
-    // unoptimized: true,
+
+    // ✅ OR use domains (optional alternative)
+    domains: ["astrosway-service.s3.amazonaws.com"],
   },
 };
 
 export default withNextIntl(nextConfig);
-
-

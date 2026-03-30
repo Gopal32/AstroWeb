@@ -60,15 +60,47 @@ import LegalDark from "@/svg/category/darkmode/legal";
 import MarriageDark from "@/svg/category/darkmode/marriage";
 import WealthDark from "@/svg/category/darkmode/wealth";
 import { Link } from "@/i18n/routing";
+import useApi from "@/hooks/useApi";
+import { useRouter } from "next/router";
 
 export default function HomePage() {
   const t = useTranslations("Home");
   const { resolvedTheme } = useTheme();
+  const { apiCall } = useApi();
   const [activeTab, setActiveTab] = useState("daily");
   const [mounted, setMounted] = useState(false);
+  const [astrologers, setAstrologers] = useState([]);
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const fetchAstrologers = async () => {
+      try {
+        const endpoints = [
+          "/api/astrologer/free",
+          "/api/astrologer/offer",
+          "/api/astrologer/normal",
+        ];
+
+        for (const url of endpoints) {
+          const res = await apiCall(url, "GET");
+
+          if (res?.data?.details?.length) {
+            setAstrologers(res.data.details);
+            return;
+          }
+        }
+
+        // fallback if nothing found
+        setAstrologers([]);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchAstrologers();
   }, []);
 
   // Responsive slider settings
@@ -189,101 +221,6 @@ export default function HomePage() {
     { name: "Legal", Light: LegalLight, Dark: LegalDark },
     { name: "Marriage", Light: MarriageLight, Dark: MarriageDark },
     { name: "Wealth", Light: WealthLight, Dark: WealthDark },
-  ];
-
-  const topAstrologers = [
-    //  GIRL (Image 1)
-    {
-      id: 1,
-      name: "Acharya Kavya Sharma",
-      rating: 4.9,
-      reviews: 554,
-      experience: "15 years",
-      consultations: 4769,
-      expertise: ["Vedic", "Tarot", "Palmistry"],
-      image: "/assets/images/astrologers/1.jpg",
-      price: 3.99,
-      online: true,
-      languages: ["Hindi", "English"],
-      badge: "Top Rated",
-    },
-
-    // BOY (Image 3)
-    {
-      id: 2,
-      name: "Pandit Arjun Mehta",
-      rating: 4.6,
-      reviews: 180,
-      experience: "11 years",
-      consultations: 1834,
-      expertise: ["Western", "Career"],
-      image: "/assets/images/astrologers/3.jpg",
-      price: 3.99,
-      online: false,
-      languages: ["Hindi", "English"],
-      badge: "Career Expert",
-    },
-
-    // GIRL (Image 2)
-    {
-      id: 3,
-      name: "Tarot Reader Anagha Joshi",
-      rating: 4.7,
-      reviews: 42,
-      experience: "10 years",
-      consultations: 379,
-      expertise: ["Tarot", "Numerology"],
-      image: "/assets/images/astrologers/2.jpg",
-      price: 4.99,
-      online: true,
-      languages: ["Hindi", "English", "Marathi"],
-    },
-
-    // BOY (Image 4)
-    {
-      id: 4,
-      name: "Guru Raghav Iyer",
-      rating: 4.8,
-      reviews: 324,
-      experience: "8 years",
-      consultations: 2261,
-      expertise: ["Healing", "Reiki", "Spiritual"],
-      image: "/assets/images/astrologers/4.jpg",
-      price: 4.49,
-      online: true,
-      languages: ["Hindi", "English", "Tamil"],
-    },
-
-    //  GIRL (Image 6)
-    {
-      id: 5,
-      name: "Spiritual Guide Meera Kapoor",
-      rating: 4.8,
-      reviews: 364,
-      experience: "9 years",
-      consultations: 3296,
-      expertise: ["Mediumship", "Tarot", "Dreams"],
-      image: "/assets/images/astrologers/6.jpg",
-      price: 4.99,
-      online: true,
-      languages: ["Hindi", "English"],
-    },
-
-    //  BOY (Image 5)
-    {
-      id: 6,
-      name: "Jyotish Devendra Rao",
-      rating: 4.9,
-      reviews: 462,
-      experience: "17 years",
-      consultations: 3205,
-      expertise: ["Love", "Relationship", "Vedic"],
-      image: "/assets/images/astrologers/5.jpg",
-      price: 3.99,
-      online: true,
-      languages: ["Hindi", "English"],
-      badge: "Love Expert",
-    },
   ];
 
   const testimonials = [
@@ -551,39 +488,39 @@ export default function HomePage() {
 
       {/* ===== TODAY'S ASTROLOGY PREDICTION ===== */}
       <section className="py-20 sm:py-20 lg:py-24 bg-[#FAF6ED] dark:bg-muted/30">
-       <div className="container mx-auto px-4 sm:px-6">
-        <h2 className="text-2xl sm:text-3xl font-bold mb-8">
-          Today's Astrology Prediction
-        </h2>
+        <div className="container mx-auto px-4 sm:px-6">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-8">
+            Today's Astrology Prediction
+          </h2>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-          {zodiacSigns.map((sign, index) => (
-            <Link
-              key={index}
-              href="#"
-              // href={`/horoscope/${sign.name.toLowerCase()}`}
-              className="group"
-            >
-              <div className="space-y-3">
-                {/* IMAGE CARD */}
-                <div className="rounded-2xl overflow-hidden shadow-sm transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl">
-                  <Image
-                    src={sign.image}
-                    alt={sign.name}
-                    width={300}
-                    height={200}
-                    className="w-full h-[120px] object-cover"
-                  />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+            {zodiacSigns.map((sign, index) => (
+              <Link
+                key={index}
+                href="#"
+                // href={`/horoscope/${sign.name.toLowerCase()}`}
+                className="group"
+              >
+                <div className="space-y-3">
+                  {/* IMAGE CARD */}
+                  <div className="rounded-2xl overflow-hidden shadow-sm transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl">
+                    <Image
+                      src={sign.image}
+                      alt={sign.name}
+                      width={300}
+                      height={200}
+                      className="w-full h-[120px] object-cover"
+                    />
+                  </div>
+
+                  {/* TITLE */}
+                  <p className="text-center font-semibold text-sm sm:text-base group-hover:text-primary transition-colors">
+                    {sign.name}
+                  </p>
                 </div>
-
-                {/* TITLE */}
-                <p className="text-center font-semibold text-sm sm:text-base group-hover:text-primary transition-colors">
-                  {sign.name}
-                </p>
-              </div>
-            </Link>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -683,70 +620,115 @@ export default function HomePage() {
                 Chat with expert astrologers online
               </p>
             </div>
-            <Link
-              href="#"
-            // href="/astrologers"
-            >
-              <Button variant="outline" className="gap-2 w-full sm:w-auto">
-                View All <ChevronRight className="h-4 w-4" />
-              </Button>
-            </Link>
           </div>
 
           <div className="slider-container -mx-2">
             <Slider {...astrologerSettings}>
-              {topAstrologers.map((astro) => (
-                <div key={astro.id} className="px-2">
-                  <Card className="rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 p-0">
-                    {/* 🔥 IMAGE — NO GAP */}
-                    <div className="relative w-full h-[190px] m-0 p-0 leading-none">
-                      <img
-                        src={astro.image}
-                        alt={astro.name}
-                        className="block w-full h-full object-cover"
-                      />
+              {astrologers.map((astro) => (
+                <div key={astro.astroId} className="px-2">
+                  <Link href={`/astro-profile/${astro.astroId}`}>
+                    <Card className="rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 p-0 cursor-pointer group">
 
-                      {/* Online Badge */}
-                      {astro.online && (
-                        <div className="absolute top-3 left-3 bg-white px-3 py-1 rounded-full flex items-center gap-2 text-xs font-medium shadow-sm">
-                          <span className="h-2 w-2 bg-green-500 rounded-full"></span>
-                          <span className="text-green-600">Online</span>
+                      {/* IMAGE */}
+                      <div className="relative w-full h-[190px]">
+                        <img
+                          src={astro.photo}
+                          alt={astro.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                        />
+
+                        {/* ONLINE */}
+                        {astro.status === "online" && (
+                          <div className="absolute top-3 left-3 bg-white px-3 py-1 rounded-full flex items-center gap-2 text-xs font-medium shadow-sm">
+                            <span className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></span>
+                            <span className="text-green-600">Online</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* CONTENT */}
+                      <div className="p-5">
+
+                        {/* NAME */}
+                        <h3 className="text-lg font-semibold line-clamp-1">
+                          {astro.name}
+                        </h3>
+
+                        {/* RATING + EXPERIENCE */}
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          <span>{astro.rating || 4.5}</span>
+                          <span>•</span>
+                          <span>{astro.experience} yrs</span>
                         </div>
-                      )}
-                    </div>
 
-                    {/* CONTENT */}
-                    <div className="p-5">
-                      <h3 className="text-lg font-semibold text-left">
-                        {astro.name}
-                      </h3>
+                        {/* 🔥 EXPERTISE */}
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {astro.expertise?.slice(0, 2).map((exp, i) => (
+                            <span
+                              key={i}
+                              className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full capitalize"
+                            >
+                              {exp}
+                            </span>
+                          ))}
+                        </div>
 
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span>{astro.rating}</span>
-                        <span>({astro.reviews})</span>
-                        <span>•</span>
-                        <span>{astro.experience}</span>
+                        {/* 🌐 LANGUAGES */}
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {astro.language?.slice(0, 2).join(", ")}
+                        </div>
+
+                        {/* 🔥 SERVICES */}
+                        <div className="flex gap-2 mt-3 flex-wrap">
+
+                          {astro.chatService === 1 && (
+                            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full flex items-center gap-1">
+                              <MessageCircle className="h-3 w-3" /> Chat
+                            </span>
+                          )}
+
+                          {astro.callService === 1 && (
+                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full flex items-center gap-1">
+                              <Phone className="h-3 w-3" /> Call
+                            </span>
+                          )}
+
+                          {astro.videoService === 1 && (
+                            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full flex items-center gap-1">
+                              <Video className="h-3 w-3" /> Video
+                            </span>
+                          )}
+
+                        </div>
+
+                        {/* DIVIDER */}
+                        <div className="border-t border-border my-4"></div>
+
+                        {/* PRICE + CTA */}
+                        <div className="flex justify-between items-center">
+
+                          <span className="text-lg font-bold text-primary">
+                            ₹{astro.chatNormalPrice}/min
+                          </span>
+
+                          {/* BUTTON */}
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault(); // prevent Link override
+                              e.stopPropagation();
+                              // optionally trigger chat modal
+                            }}
+                          >
+                            <Button size="sm" className="gap-1">
+                              Chat <MessageCircle className="h-3 w-3" />
+                            </Button>
+                          </button>
+
+                        </div>
                       </div>
-
-                      <div className="border-t border-border my-4"></div>
-
-                      <div className="flex justify-between items-center">
-                        <span className="text-lg font-bold text-primary">
-                          ${astro.price}/min
-                        </span>
-
-                        <Link
-                          // href={`/astrologer/${astro.id}`}
-                          href="#"
-                        >
-                          <Button size="sm" className="gap-1">
-                            Chat <MessageCircle className="h-3 w-3" />
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  </Card>
+                    </Card>
+                  </Link>
                 </div>
               ))}
             </Slider>

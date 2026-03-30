@@ -1,5 +1,3 @@
-import { cookies } from "next/headers";
-
 export async function GET() {
   try {
     const token = cookies().get("token")?.value;
@@ -10,15 +8,15 @@ export async function GET() {
         { status: 401 }
       );
     }
-    //  call external API
     const response = await fetch(
-      "https://api-users.astrosway.com/user/web/recommended/astro",
+      "https://api-users.astrosway.com/user/offerAstroList?limit=10&page=1&serviceType=chat",
       {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        }
+          "Authorization": token,
+        },
+        cache: "no-store",
       }
     );
 
@@ -26,10 +24,10 @@ export async function GET() {
     return Response.json(data);
 
   } catch (error) {
-    console.error("Recommended astro error:", error);
+    console.error("Offer astro error:", error);
 
     return Response.json(
-      { message: "Failed to fetch astrologers" },
+      { message: "Failed to fetch offer astrologers" },
       { status: 500 }
     );
   }

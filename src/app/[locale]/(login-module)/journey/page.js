@@ -463,10 +463,12 @@ export default function JourneyPage() {
                       return (
                         <div
                           key={astro.astroId}
+                          onClick={() => router.push(`/astro-profile/${astro.astroId}`)}
                           style={{
                             display: "flex", gap: "16px", alignItems: "flex-start",
                             padding: "18px 20px", borderRadius: "14px",
                             background: t.astroBg, border: `1.5px solid ${t.astroBorder}`,
+                            cursor: "pointer",
                           }}
                         >
                           {/* Photo + online dot */}

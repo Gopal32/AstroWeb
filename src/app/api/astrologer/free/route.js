@@ -10,15 +10,16 @@ export async function GET() {
         { status: 401 }
       );
     }
-    //  call external API
+
     const response = await fetch(
-      "https://api-users.astrosway.com/user/web/recommended/astro",
+      "https://api-users.astrosway.com/user/firstTimeFreeAstroList?limit=10&page=1&serviceType=chat",
       {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
-        }
+        },
+        cache: "no-store",
       }
     );
 
@@ -26,10 +27,10 @@ export async function GET() {
     return Response.json(data);
 
   } catch (error) {
-    console.error("Recommended astro error:", error);
+    console.error("Free astro error:", error);
 
     return Response.json(
-      { message: "Failed to fetch astrologers" },
+      { message: "Failed to fetch free astrologers" },
       { status: 500 }
     );
   }
