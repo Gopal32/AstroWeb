@@ -2,10 +2,10 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useParams } from "next/navigation";
-import { RequireAstroComplete } from "@/hooks/astroGuard";
 import { Star, CheckCircle, MessageCircle, Phone, Video, FileText, Clock, ThumbsUp, GraduationCap, Languages, BookOpen, Loader2 } from "lucide-react";
 import Image from "next/image";
 import useApi from "@/hooks/useApi";
+import Link from "next/link";
 
 function AstroProfileContent() {
     const { id } = useParams();
@@ -29,6 +29,7 @@ function AstroProfileContent() {
                     `/api/astrologer/astro/${id}`,
                     "GET"
                 );
+
                 // Handle varying response envelopes safely
                 const astroData = res?.data?.data || res?.data || res;
 
@@ -165,15 +166,61 @@ function AstroProfileContent() {
 
                         {/* Action Buttons */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mt-auto">
-                            <button className="bg-yellow-500 hover:bg-yellow-400 text-yellow-950 font-bold py-4 px-4 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 group">
-                                <MessageCircle className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" /> Chat Now
-                            </button>
-                            <button className="bg-card hover:bg-accent border border-border text-foreground font-semibold py-4 px-4 rounded-2xl flex items-center justify-center transition-all shadow-sm active:scale-95 group">
-                                <Phone className="w-5 h-5 mr-2 text-muted-foreground group-hover:text-foreground transition-colors" /> Voice Call
-                            </button>
-                            <button className="bg-card hover:bg-accent border border-border text-foreground font-semibold py-4 px-4 rounded-2xl flex items-center justify-center transition-all shadow-sm active:scale-95 group">
-                                <Video className="w-5 h-5 mr-2 text-muted-foreground group-hover:text-foreground transition-colors" /> Video Call
-                            </button>
+
+                            {astro.chatService == 1 && (
+                                <Link
+                                    href={{
+                                        pathname: "/user-details",
+                                        query: {
+                                            astroId: id,
+                                            type: "chat",
+                                            service: astro.sessionType,
+                                        },
+                                    }}
+                                >
+                                    <button className="bg-yellow-500 hover:bg-yellow-400 text-yellow-950 font-bold py-4 px-4 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 group">
+                                        <MessageCircle className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
+                                        Chat Now
+                                    </button>
+                                </Link>
+                            )}
+
+                            {astro.callService == 1 && (
+                                <Link
+                                    href={{
+                                        pathname: "/user-details",
+                                        query: {
+                                            astroId: id,
+                                            type: "call",
+                                            service: astro.sessionType,
+                                        },
+                                    }}
+                                >
+                                    <button className="bg-card hover:bg-accent border border-border text-foreground font-semibold py-4 px-4 rounded-2xl flex items-center justify-center transition-all shadow-sm active:scale-95 group">
+                                        <Phone className="w-5 h-5 mr-2 text-muted-foreground group-hover:text-foreground transition-colors" />
+                                        Voice Call
+                                    </button>
+                                </Link>
+                            )}
+
+                            {astro.videoService == 1 && (
+                                <Link
+                                    href={{
+                                        pathname: "/user-details",
+                                        query: {
+                                            astroId: id,
+                                            type: "video",
+                                            service: astro.sessionType,
+                                        },
+                                    }}
+                                >
+                                    <button className="bg-card hover:bg-accent border border-border text-foreground font-semibold py-4 px-4 rounded-2xl flex items-center justify-center transition-all shadow-sm active:scale-95 group">
+                                        <Video className="w-5 h-5 mr-2 text-muted-foreground group-hover:text-foreground transition-colors" />
+                                        Video Call
+                                    </button>
+                                </Link>
+                            )}
+
                         </div>
                     </div>
                 </div>
