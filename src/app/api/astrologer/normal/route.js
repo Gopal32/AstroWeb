@@ -1,3 +1,5 @@
+import { cookies } from "next/headers";
+
 export async function GET() {
   try {
 
@@ -11,7 +13,7 @@ export async function GET() {
     }
 
     const response = await fetch(
-      "https://api-users.astrosway.com/user/normalAstroList?limit=10&page=1&serviceType=chat",
+      "https://api-users.astrosway.com/user/normalAstroList?limit=10&page=1&searchField=&serviceType=chat",
       {
         method: "GET",
         headers: {
