@@ -79,8 +79,8 @@ export default function HomePage() {
     const fetchAstrologers = async () => {
       try {
         const endpoints = [
-          "/api/astrologer/free",
           "/api/astrologer/offer",
+          "/api/astrologer/free",
           "/api/astrologer/normal",
         ];
 

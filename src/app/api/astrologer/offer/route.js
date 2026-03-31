@@ -4,7 +4,7 @@ export async function GET() {
   try {
     const token = cookies().get("token")?.value;
 
-    const authorization = token ? token : "null";
+    const authorization = token ? token : "INTERNAL_AUTH";
 
     const response = await fetch(
       "https://api-users.astrosway.com/user/offerAstroList?limit=10&page=1&serviceType=chat",

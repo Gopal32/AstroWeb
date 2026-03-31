@@ -6,14 +6,19 @@ import { Star, CheckCircle, MessageCircle, Phone, Video, FileText, Clock, Thumbs
 import Image from "next/image";
 import useApi from "@/hooks/useApi";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthProvider";
+import { useRouter } from "next/navigation";
 
 function AstroProfileContent() {
     const { id } = useParams();
     const { apiCall } = useApi();
+    const router = useRouter();
+    const { user, isAuthenticated } = useAuth();
 
     const [astro, setAstro] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [errorL, setErrorL] = useState("");
 
     useEffect(() => {
         async function fetchAstro() {
@@ -48,6 +53,26 @@ function AstroProfileContent() {
 
         fetchAstro();
     }, [id, apiCall]);
+
+    const handleAction = (type) => {
+        if (loading) return;
+
+        if (!isAuthenticated) {
+            setErrorL(
+                "Start your session by logging in or signing up. Redirecting to register..."
+            );
+
+            setTimeout(() => {
+                router.push("/register");
+            }, 1500);
+
+            return;
+        }
+
+        router.push(
+            `/user-details?astroId=${id}&type=${type}&service=${astro.sessionType}`
+        );
+    };
 
     if (loading) {
         return (
@@ -164,61 +189,42 @@ function AstroProfileContent() {
                             </div>
                         </div>
 
-                        {/* Action Buttons */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mt-auto">
+                        {errorL && (
+                            <div className="mt-3 rounded-xl bg-red-500/10 backdrop-blur-md px-4 py-3 text-sm font-medium text-red-600 border border-red-400/20 shadow-sm">
+                                {errorL}
+                            </div>
+                        )}
 
+                        {/* Action Buttons */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-2 justify-center mt-2">
                             {astro.chatService == 1 && (
-                                <Link
-                                    href={{
-                                        pathname: "/user-details",
-                                        query: {
-                                            astroId: id,
-                                            type: "chat",
-                                            service: astro.sessionType,
-                                        },
-                                    }}
+                                <button
+                                    onClick={() => handleAction("chat")}
+                                    className="bg-yellow-500 hover:bg-yellow-400 text-yellow-950 font-bold py-4 px-4 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 group"
                                 >
-                                    <button className="bg-yellow-500 hover:bg-yellow-400 text-yellow-950 font-bold py-4 px-4 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 group">
-                                        <MessageCircle className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
-                                        Chat Now
-                                    </button>
-                                </Link>
+                                    <MessageCircle className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
+                                    Chat Now
+                                </button>
                             )}
 
                             {astro.callService == 1 && (
-                                <Link
-                                    href={{
-                                        pathname: "/user-details",
-                                        query: {
-                                            astroId: id,
-                                            type: "call",
-                                            service: astro.sessionType,
-                                        },
-                                    }}
+                                <button
+                                    onClick={() => handleAction("call")}
+                                    className="bg-card hover:bg-accent border border-border text-foreground font-semibold py-4 px-4 rounded-2xl flex items-center justify-center transition-all shadow-sm active:scale-95 group"
                                 >
-                                    <button className="bg-card hover:bg-accent border border-border text-foreground font-semibold py-4 px-4 rounded-2xl flex items-center justify-center transition-all shadow-sm active:scale-95 group">
-                                        <Phone className="w-5 h-5 mr-2 text-muted-foreground group-hover:text-foreground transition-colors" />
-                                        Voice Call
-                                    </button>
-                                </Link>
+                                    <Phone className="w-5 h-5 mr-2 text-muted-foreground group-hover:text-foreground transition-colors" />
+                                    Voice Call
+                                </button>
                             )}
 
                             {astro.videoService == 1 && (
-                                <Link
-                                    href={{
-                                        pathname: "/user-details",
-                                        query: {
-                                            astroId: id,
-                                            type: "video",
-                                            service: astro.sessionType,
-                                        },
-                                    }}
+                                <button
+                                    onClick={() => handleAction("video")}
+                                    className="bg-card hover:bg-accent border border-border text-foreground font-semibold py-4 px-4 rounded-2xl flex items-center justify-center transition-all shadow-sm active:scale-95 group"
                                 >
-                                    <button className="bg-card hover:bg-accent border border-border text-foreground font-semibold py-4 px-4 rounded-2xl flex items-center justify-center transition-all shadow-sm active:scale-95 group">
-                                        <Video className="w-5 h-5 mr-2 text-muted-foreground group-hover:text-foreground transition-colors" />
-                                        Video Call
-                                    </button>
-                                </Link>
+                                    <Video className="w-5 h-5 mr-2 text-muted-foreground group-hover:text-foreground transition-colors" />
+                                    Video Call
+                                </button>
                             )}
 
                         </div>
