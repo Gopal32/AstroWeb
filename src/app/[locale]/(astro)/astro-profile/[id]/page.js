@@ -341,13 +341,19 @@ function AstroProfileContent() {
                                     <span className="text-muted-foreground flex items-center text-sm font-medium"><Video className="w-5 h-5 mr-3 text-primary/70 group-hover:text-primary transition-colors" /> Video Call</span>
                                     <span className="font-bold text-yellow-600 dark:text-yellow-500">₹{astro.videoNormalPrice || 90}/min</span>
                                 </div>
-                                <div className="flex items-center justify-between border-t border-border pt-5 mt-2 group">
-                                    <span className="text-foreground flex items-center text-sm font-bold"><FileText className="w-5 h-5 mr-3 text-primary" /> Detailed PDF Report</span>
-                                    <span className="font-bold text-foreground">₹1,499</span>
-                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setStep(2)}
+                                    className="
+                                         w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl border 
+                                         border-border text-foreground font-bold text-sm uppercase tracking-wide bg-transparent hover:bg-mutedm hover:border-primary/50 transition-all">
+                                    <FileText className="w-4 h-4 text-primary" />
+                                    Schedule Session
+                                </button>
                             </div>
 
-                            <button className="w-full mt-8 bg-yellow-500 hover:bg-yellow-400 text-yellow-950 font-bold py-4 px-4 rounded-xl shadow-md transition-all active:scale-95 text-base relative z-10">
+                            <button onClick={() => router.push("/recharge")}
+                                className="w-full mt-8 bg-yellow-500 hover:bg-yellow-400 text-yellow-950 font-bold py-4 px-4 rounded-xl shadow-md transition-all active:scale-95 text-base relative z-10">
                                 Recharge & Connect
                             </button>
                             <p className="text-center text-[10px] md:text-xs text-muted-foreground mt-4 uppercase tracking-widest font-semibold relative z-10">Prices inclusive of all spiritual taxes</p>

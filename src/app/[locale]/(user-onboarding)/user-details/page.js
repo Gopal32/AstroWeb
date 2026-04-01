@@ -42,6 +42,7 @@ function UserProfileContent({ searchParams }) {
     });
 
     const [durationList, setDurationList] = useState([]);
+    const anyPlanTrue = durationList.some((dur) => dur.isActive);
     const [slotsLoading, setSlotsLoading] = useState(true);
 
     const [showQueueModal, setShowQueueModal] = useState(false);
@@ -452,6 +453,8 @@ function UserProfileContent({ searchParams }) {
                                 </div>
 
                                 <div className="flex flex-col-reverse sm:flex-row items-center justify-between pt-4 gap-4 border-t border-border mt-8">
+
+                                    {/*  BACK BUTTON */}
                                     <button
                                         type="button"
                                         onClick={() => router.back()}
@@ -463,17 +466,30 @@ function UserProfileContent({ searchParams }) {
                                         Go Back
                                     </button>
 
-                                    <button
-                                        type="button"
-                                        disabled={!selectedDuration || slotsLoading}
-                                        onClick={() => {
-                                            window.scrollTo({ top: 0, behavior: "smooth" });
-                                            setStep(2);
-                                        }}
-                                        className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold px-10 py-4 rounded-xl shadow-[0_4px_20px_rgba(250,204,21,0.25)] transition-all hover:shadow-[0_4px_25px_rgba(250,204,21,0.4)] flex items-center justify-center disabled:opacity-50 disabled:pointer-events-none shrink-0"
-                                    >
-                                        Continue to Details <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-                                    </button>
+                                    {/* CONDITIONAL BUTTON */}
+                                    {anyPlanTrue ? (
+                                        <button
+                                            type="button"
+                                            disabled={!selectedDuration || slotsLoading}
+                                            onClick={() => {
+                                                window.scrollTo({ top: 0, behavior: "smooth" });
+                                                setStep(2);
+                                            }}
+                                            className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-extrabold px-10 py-4 rounded-xl shadow-[0_4px_20px_rgba(250,204,21,0.25)] transition-all hover:shadow-[0_4px_25px_rgba(250,204,21,0.4)] flex items-center justify-center disabled:opacity-50 disabled:pointer-events-none shrink-0"
+                                        >
+                                            Continue to Details
+                                            <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                            </svg>
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => router.push("/recharge")}
+                                            className="w-full sm:w-auto bg-yellow-500 hover:bg-yellow-400 text-yellow-950 font-bold px-8 py-4 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center shrink-0"
+                                        >
+                                            Recharge & Connect
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         )}

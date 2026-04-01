@@ -9,25 +9,15 @@ import {
   Award,
   Calendar,
   ChevronRight,
-  Heart,
-  Briefcase,
-  BookOpen,
   MessageCircle,
   Phone,
   Video,
   TrendingUp,
   ShieldCheck,
-  Feather,
-  Eye,
   CreditCard,
   UserPlus,
   MessageSquare,
   Sparkles as SparklesIcon,
-  Users2,
-  HeartHandshake,
-  BriefcaseBusiness,
-  IndianRupee,
-  Flower2,
   Compass as CompassIcon,
   Stars,
   Sparkle as SparkleIcon,
@@ -35,9 +25,8 @@ import {
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { HomeSkeleton, AstrologerSkeleton } from "@/components/HomeSkeleton";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -61,7 +50,8 @@ import MarriageDark from "@/svg/category/darkmode/marriage";
 import WealthDark from "@/svg/category/darkmode/wealth";
 import { Link } from "@/i18n/routing";
 import useApi from "@/hooks/useApi";
-import { useRouter } from "next/router";
+import { se } from "date-fns/locale";
+import { set } from "date-fns";
 
 export default function HomePage() {
   const t = useTranslations("Home");
@@ -69,6 +59,7 @@ export default function HomePage() {
   const { apiCall } = useApi();
   const [activeTab, setActiveTab] = useState("daily");
   const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [astrologers, setAstrologers] = useState([]);
 
   useEffect(() => {
@@ -77,6 +68,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const fetchAstrologers = async () => {
+      setLoading(true);
       try {
         const endpoints = [
           "/api/astrologer/offer",
@@ -97,6 +89,8 @@ export default function HomePage() {
         setAstrologers([]);
       } catch (err) {
         console.error(err);
+      } finally { 
+        setLoading(false);
       }
     };
 
@@ -609,7 +603,10 @@ export default function HomePage() {
       </section>
 
       {/* ===== TOP ASTROLOGERS SECTION ===== */}
-      <section className="bg-muted/30 py-12 sm:py-16 dark:bg-background">
+      {loading ? (
+  <HomeSkeleton count={4} CardComponent={AstrologerSkeleton} />
+) : (
+  <section className="bg-muted/30 py-12 sm:py-16 dark:bg-background">
         <div className="container mx-auto px-4">
           <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8 gap-4">
             <div className="text-center sm:text-left">
@@ -735,6 +732,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+)}
 
       {/* ===== CONSULTATION OPTIONS ===== */}
       <section className="py-16 sm:py-20 bg-[#F9F5EC] dark:bg-muted/30">

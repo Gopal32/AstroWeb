@@ -101,6 +101,32 @@
   --sidebar-ring: #3B82F6;
 }
 
+@keyframes shimmer {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+
+.skeleton-shimmer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  animation: shimmer 1.6s infinite;
+  background: linear-gradient(
+    110deg,
+    transparent 25%,
+    rgba(255, 255, 255, 0.15) 45%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0.15) 55%,
+    transparent 75%
+  );
+  transform: skewX(-20deg);
+}
+
 /* ===== DARK MODE (Your Brand Mode) ===== */
 
 .dark {

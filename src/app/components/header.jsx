@@ -30,6 +30,7 @@ import {
   Flame,
   Mountain,
   Crown,
+  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -762,6 +763,38 @@ export default function Header() {
               <LocaleSwitcher />
             </div>
 
+            {/* Wallet money */}
+            {isAuthenticated && (
+              <div
+                className="
+      flex items-center gap-3
+      px-4 py-2.5
+      rounded-xl
+      bg-gradient-to-r from-primary/10 to-primary/5
+      border border-primary/20
+      backdrop-blur-sm
+      shadow-sm
+      hover:shadow-md
+      transition-all duration-300
+    "
+              >
+                {/* Icon */}
+                <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10">
+                  <Wallet className="w-5 h-5 text-primary" />
+                </div>
+
+                {/*  Amount */}
+                <div className="flex flex-col leading-tight">
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Wallet
+                  </span>
+                  <span className="text-sm font-bold text-foreground">
+                    ₹{user?.totalAmount?.toFixed(2) || "0.00"}
+                  </span>
+                </div>
+              </div>
+            )}
+
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -822,12 +855,12 @@ export default function Header() {
             ) : (
               <div className="flex items-center gap-2">
                 <Button asChild>
-  <Link href="/register">Register</Link>
-</Button>
+                  <Link href="/register">Register</Link>
+                </Button>
 
-<Button asChild>
-  <Link href="/login">Login</Link>
-</Button>
+                <Button asChild>
+                  <Link href="/login">Login</Link>
+                </Button>
               </div>
             )}
 
