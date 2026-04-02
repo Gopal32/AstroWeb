@@ -13,7 +13,8 @@ export async function POST(request) {
     } = await request.json();
 
     // Get token from cookies
-    const token = cookies().get("token")?.value;
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value; 
     
     // Authentication check
     if (!token) {

@@ -5,8 +5,9 @@ export async function GET(request, { params }) {
     const { astroId } = params;
 
     // Get token from cookies
-    const token = cookies().get("token")?.value;
-     console.log("Received queue time request for astroId:", astroId, "with token:", token ? "****" : null);
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value; 
+    
     // Auth check
     if (!token) {
       return Response.json(

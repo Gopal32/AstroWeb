@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/sonner";
 import ClarityScript from "../components/analytics/ClarityScript";
 import { GoogleTagManager } from "@next/third-parties/google";
 import { AuthProvider } from "@/context/AuthProvider";
+import { SessionProvider } from "@/context/SessionProvider";
 // import { GoogleAnalytics } from "@next/third-parties/google";
 
 export const metadata = {
@@ -43,10 +44,12 @@ export default async function LocaleLayout({ children, params }) {
         >
           <NextIntlClientProvider locale={locale} messages={messages}>
             <AuthProvider>
+              <SessionProvider>
               <Header />
               <main className="flex-1">{children}</main>
               <Toaster />
               <Footer />
+              </SessionProvider>
             </AuthProvider>
           </NextIntlClientProvider>
         </ThemeProvider>

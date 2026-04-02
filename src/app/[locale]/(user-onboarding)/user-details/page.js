@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense, use } from "react";
+import { useState, useEffect, Suspense, use, useContext, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Star, Clock, CalendarIcon, Loader2, MapPin } from "lucide-react";
@@ -10,6 +10,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import useApi from "@/hooks/useApi";
 import { useAuth } from "@/context/AuthProvider";
+import { useSession } from "@/context/SessionProvider";
+import { se } from "date-fns/locale";
 
 function UserProfileContent({ searchParams }) {
     const router = useRouter();
@@ -17,6 +19,7 @@ function UserProfileContent({ searchParams }) {
     const sessionType = searchParams?.sessionType || "regular";
     const serviceType = searchParams?.serviceType || "chat";
     const { apiCall } = useApi();
+    const [astro, setAstro] = useState(null);
     const { user, isAuthenticated } = useAuth();
     const userId = user?.userId || null;
 
@@ -28,9 +31,6 @@ function UserProfileContent({ searchParams }) {
 
     const [suggestions, setSuggestions] = useState([]);
     const [placesLoading, setPlacesLoading] = useState(false);
-
-    // Fetching Astrophysician details if astroId exists
-    const [astro, setAstro] = useState(null);
     const [astroLoading, setAstroLoading] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -44,25 +44,24 @@ function UserProfileContent({ searchParams }) {
     const [durationList, setDurationList] = useState([]);
     const anyPlanTrue = durationList.some((dur) => dur.isActive);
     const [slotsLoading, setSlotsLoading] = useState(true);
-
-    const [showQueueModal, setShowQueueModal] = useState(false);
     const [queueTime, setQueueTime] = useState("");
-    const [queueLoading, setQueueLoading] = useState(false);
-    const [serviceData, setServiceData] = useState(null);
-
     const [selectedDuration, setSelectedDuration] = useState(null);
     const [step, setStep] = useState(1);
+    const astrologerRate = useMemo(() => {
+        return astro?.chatNormalPrice ?? astro?.callNormalPrice ?? 10;
+    }, [astro]);
+    const { setUserServiceData, setShowQueueModal, setUserData } = useSession();
 
-    const astrologerRate = astro?.chatNormalPrice || astro?.callNormalPrice || 10;
-
-    const durations = [
-        { label: "INSTANT", mins: 5, price: astrologerRate * 5 },
-        { label: "BRIEF", mins: 10, price: astrologerRate * 10 },
-        { label: "DEEP DIVE", mins: 15, price: astrologerRate * 15 },
-        { label: "EXPANSION", mins: 20, price: astrologerRate * 20 },
-        { label: "INSIGHT", mins: 25, price: astrologerRate * 25 },
-        { label: "INFINITE", mins: 30, price: astrologerRate * 30 }
-    ];
+    const durations = useMemo(() => {
+        return [
+            { label: "INSTANT", mins: 5, price: astrologerRate * 5 },
+            { label: "BRIEF", mins: 10, price: astrologerRate * 10 },
+            { label: "DEEP DIVE", mins: 15, price: astrologerRate * 15 },
+            { label: "EXPANSION", mins: 20, price: astrologerRate * 20 },
+            { label: "INSIGHT", mins: 25, price: astrologerRate * 25 },
+            { label: "INFINITE", mins: 30, price: astrologerRate * 30 }
+        ];
+    }, [astrologerRate]);
 
     useEffect(() => {
         async function fetchAstro() {
@@ -72,7 +71,7 @@ function UserProfileContent({ searchParams }) {
                 const res = await apiCall(`/api/astrologer/astro/${astroId}`,
                     "GET");
                 const astroData = res?.data?.data || res?.data || res;
-                if (astroData && !astroData.statusCode) {
+                if (astroData && !astroData?.statusCode) {
                     setAstro(astroData);
                 }
 
@@ -108,27 +107,7 @@ function UserProfileContent({ searchParams }) {
             }
         }
         fetchAstro();
-    }, [astroId, userId]);
-
-    const fetchQueueTime = async (astroId) => {
-        console.log("Fetching queue time for astroId:", astroId);
-        try {
-            setQueueLoading(true);
-
-            const res = await apiCall(`/api/user/queueTime/${astroId}`, "GET");
-
-            const data = res;
-
-            if (data?.statusCode === 200) {
-                setQueueTime(data.data); // "00:01:35"
-            }
-        } catch (err) {
-            console.error("Queue error:", err);
-        } finally {
-            setQueueLoading(false);
-        }
-    };
-
+    }, [astroId, userId, durations]);
 
     useEffect(() => {
         const delay = setTimeout(() => {
@@ -200,6 +179,13 @@ function UserProfileContent({ searchParams }) {
 
         setIsLoading(true);
 
+        // 🔥 CHECK ASTRO STATUS
+        if (astro?.status !== "online") {
+            setError("Astrologer is currently offline. Please try again later.");
+            setIsLoading(false);
+            return;
+        }
+
         try {
             const payload = {
                 sessionType,
@@ -218,26 +204,24 @@ function UserProfileContent({ searchParams }) {
 
                 //  2. STORE SERVICE DATA
                 const service = result.data;
-                setServiceData(service);
 
-                // 🔥 CHECK ASTRO STATUS
-                if (service?.astro?.status !== "online") {
-                    setError("Astrologer is currently offline. Please try again later.");
-                    return;
+                //passing the data into context to be used in queue modal and other places if needed
+                setUserServiceData(service);
+                setUserData(payload.message);
+                setShowQueueModal(true);
+                if (result?.data?.serviceType === "chat") {
+                    console.log("Chat service selected", result?.data?.roomId);
+                    router.push(`/user-chat-service/${result?.data?.roomId}`);
+                } else {
+                    router.push(`/user-call-service/${result?.data?.roomId}`);
                 }
 
-                //  3. OPEN MODAL
-                setShowQueueModal(true);
-
-                //  4. CALL QUEUE API
-                await fetchQueueTime(service?.astro?.astroId);
-
             } else {
-                setError(result?.message || "Something went wrong");
+                setError("Something went wrong");
             }
 
         } catch (err) {
-            setError(err.message || "Network error. Please try again.");
+            setError(err?.message || "Network error. Please try again.");
         } finally {
             setIsLoading(false);
         }
@@ -335,6 +319,23 @@ function UserProfileContent({ searchParams }) {
                                 <div className="flex justify-center items-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
                             ) : (
                                 <>
+                                    <div className="absolute top-4 right-4">
+                                        {astro?.status === "online" && (
+                                            <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center" title="Online">
+                                                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                                            </div>
+                                        )}
+                                        {astro?.status === "busy" && (
+                                            <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center" title="Busy">
+                                                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                                            </div>
+                                        )}
+                                        {astro?.status === "offline" && (
+                                            <div className="w-10 h-10 rounded-full bg-yellow-500/10 flex items-center justify-center" title="Offline">
+                                                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                            </div>
+                                        )}
+                                    </div>
                                     <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden mb-5 border border-border shadow-lg relative z-10 p-1 bg-gradient-to-br from-primary/5 to-transparent">
                                         <Image src={astrologerImage} alt={astrologerName} width={112} height={112} className="rounded-xl object-cover w-full h-full group-hover:scale-105 transition-transform duration-500" />
                                     </div>
@@ -689,91 +690,6 @@ function UserProfileContent({ searchParams }) {
 
                 </div>
             </div>
-
-            {showQueueModal && serviceData && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center px-4">
-
-                    <div className="bg-card rounded-3xl p-6 w-full max-w-md text-center space-y-5 shadow-2xl border border-border animate-in fade-in zoom-in-95 duration-300">
-
-                        {/* 🔮 Header */}
-                        <div className="flex flex-col items-center gap-2">
-                            <img
-                                src={serviceData?.astro?.photo}
-                                alt="astro"
-                                className="w-20 h-20 rounded-full object-cover ring-2 ring-primary/40"
-                            />
-
-                            <h2 className="text-xl font-bold">
-                                {serviceData?.astro?.name}
-                            </h2>
-
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider">
-                                {serviceData?.serviceType} session
-                            </p>
-                        </div>
-
-                        {/* 🟡 Status */}
-                        <div className="bg-primary/10 text-primary text-sm font-medium px-4 py-2 rounded-full inline-block">
-                            Waiting in queue...
-                        </div>
-
-                        {/* ⏱️ Timer */}
-                        <div className="text-4xl font-bold text-primary tracking-widest">
-                            {queueLoading ? "..." : queueTime}
-                        </div>
-
-                        {/* 👤 User Details */}
-                        <div className="bg-muted/40 rounded-2xl p-4 text-left space-y-2 border border-border">
-
-                            <h3 className="text-sm font-semibold text-muted-foreground">
-                                Your Details
-                            </h3>
-
-                            <div className="text-sm">
-                                <span className="font-medium">Name:</span>{" "}
-                                {formData?.fullName}
-                            </div>
-
-                            <div className="text-sm">
-                                <span className="font-medium">Gender:</span>{" "}
-                                {formData?.gender}
-                            </div>
-
-                            <div className="text-sm">
-                                <span className="font-medium">DOB:</span>{" "}
-                                {formData?.dateOfBirth}
-                            </div>
-
-                            <div className="text-sm">
-                                <span className="font-medium">Time:</span>{" "}
-                                {formData?.timeOfBirth}
-                            </div>
-
-                            <div className="text-sm">
-                                <span className="font-medium">Place:</span>{" "}
-                                {formData?.placeOfBirth}
-                            </div>
-                        </div>
-
-                        {/* ⚡ Session Info */}
-                        <div className="flex justify-between text-sm bg-muted/30 p-3 rounded-xl border border-border">
-                            <span>Duration</span>
-                            <span className="font-semibold">
-                                {serviceData?.slotTime} mins
-                            </span>
-                        </div>
-
-                        <button
-                            onClick={() => setShowQueueModal(false)}
-                            className="w-full py-3 rounded-xl border border-border hover:bg-muted transition font-medium"
-                        >
-                            Cancel Request
-                        </button>
-
-                    </div>
-                </div>
-            )}
-
         </div>
     );
 }

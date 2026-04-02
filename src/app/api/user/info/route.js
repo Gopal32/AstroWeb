@@ -3,14 +3,14 @@ import { cookies } from "next/headers";
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value; 
+    const token = cookieStore.get("token")?.value;
     if (!token) {
       return Response.json(
         { statusCode: 401, message: "Unauthorized" },
         { status: 401 }
       );
     }
-
+    
     const response = await fetch(
       "https://api-users.astrosway.com/Onboarding/info",
       {
@@ -18,7 +18,7 @@ export async function GET() {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        cache: "no-store", // ✅ IMPORTANT (avoid stale data)
+        cache: "no-store", //  IMPORTANT (avoid stale data)
       }
     );
 
@@ -34,8 +34,11 @@ export async function GET() {
     }
 
     const data = await response.json();
-
-    return Response.json(data);
+   
+    return Response.json({
+      ...data,
+      token,
+    });
   } catch (error) {
     console.error("Error fetching user info:", error);
 

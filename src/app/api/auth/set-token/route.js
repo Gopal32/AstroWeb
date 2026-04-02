@@ -21,7 +21,7 @@ export async function POST(request) {
             secure: process.env.NODE_ENV === "production",
             sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
             path: "/",
-            // no maxAge → session cookie
+            maxAge: 60 * 60 * 24 * 2, // 2 days in seconds
         });
 
         const res = response;
