@@ -1,11 +1,13 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import useApi from "@/hooks/useApi";
 
 const SessionContext = createContext();
 
 export const SessionProvider = ({ children }) => {
   const socketRef = useRef(null);
+  const { apiCall } = useApi();
 
   const [userServiceData, setUserServiceData] = useState(null);
   const [formData, setUserData] = useState(null);
@@ -13,83 +15,62 @@ export const SessionProvider = ({ children }) => {
   const [messages, setMessages] = useState([]);
   const [groupId, setGroupId] = useState(null);
   const [isSocketConnected, setIsSocketConnected] = useState(false);
+  const [sessionToken, setSessionToken] = useState(null);
 
   // 🔌 CONNECT SOCKET (USE SESSION TOKEN ONLY)
- const connectSocket  = useCallback((sessionToken) => {
-  if (isSocketConnected || socketRef.current) return;
 
-  const socket = new WebSocket(
-    "wss://video-calling.astrosway.com/chatRoom"
-  );
+  const connectSocket = useCallback((sessionToken) => {
+    if (isSocketConnected || socketRef.current) return;
 
-  socketRef.current = socket;
+    const socket = new WebSocket(
+      "wss://video-calling.astrosway.com/chatRoom"
+    );
 
-  socket.onopen = () => {
-    setMessages([]);
-    console.log("Connected to WebSocket server");
+    socketRef.current = socket;
 
-    const joinMessage = JSON.stringify({
-      event: "joinUserRoom",
-      msg: sessionToken,
-    });
+    socket.onopen = () => {
+      console.log("✅ Socket Connected");
 
-    socket.send(joinMessage);
-    setIsSocketConnected(true);
-  };
+      socket.send(
+        JSON.stringify({
+          event: "joinUserRoom",
+          msg: sessionToken, // 🔥 CORRECT TOKEN
+        })
+      );
 
-  socket.onmessage = (event) => {
-    const data = JSON.parse(event.data);
+      setIsSocketConnected(true);
+    };
 
-    console.log("📩 Incoming:", data);
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
 
-    // ❌ CLOSE EVENT
-    if (data.event === "close") {
-      setGroupId(null);
+      console.log("📩 Incoming:", data);
+
+      if (data.event === "close") {
+        handleExit(); // 🔥 IMPORTANT
+      }
+
+      if (data.event === "message" || data.event === "success") {
+        setGroupId(data.groupId);
+
+        const result = Array.isArray(data.msg)
+          ? data.msg
+          : [data.msg];
+
+        setMessages((prev) => [...prev, ...result]);
+
+        setShowQueueModal(false);
+      }
+    };
+
+    socket.onclose = () => {
+      console.log("❌ Socket Disconnected");
+
       setIsSocketConnected(false);
-    }
-
-    // ⚠️ ERROR EVENT
-    if (data.event === "error") {
-      console.log("Socket error:", data);
-    }
-
-    // 🚫 FULL EVENT
-    if (data.event === "full") {
-
+      socketRef.current = null;
       setGroupId(null);
-      setIsSocketConnected(false);
-    }
-
-    // ✅ MESSAGE + SUCCESS
-    if (data.event === "message" || data.event === "success") {
-      setGroupId(data.groupId);
-
-      const result = Array.isArray(data.msg)
-        ? data.msg
-        : [data.msg];
-
-      setMessages((prev) => [...prev, ...result]);
-    }
-
-    // 💰 OPTIONAL: rechargeAlert (if you still need UI)
-    if (data.event === "rechargeAlert") {
-      console.log("Recharge Alert:", data.msg);
-    }
-
-    // ✅ OPTIONAL: rechargeSuccess
-    if (data.event === "rechargeSuccess") {
-      console.log("Recharge Success");
-    }
-  };
-
-  socket.onclose = () => {
-    console.log("❌ Socket Disconnected");
-
-    setIsSocketConnected(false);
-    socketRef.current = null;
-    setGroupId(null);
-  };
-}, [isSocketConnected]);
+    };
+  }, [isSocketConnected]);
 
   // 💬 SEND MESSAGE
   const sendMessage = (text) => {
@@ -118,13 +99,12 @@ export const SessionProvider = ({ children }) => {
       console.log("🚪 Exiting session...");
 
       if (userServiceData) {
-        await fetch("/api/user/cancel-service", {
-          method: "POST",
-          body: JSON.stringify({
-            serviceType: userServiceData.serviceType,
-            roomId: userServiceData.roomId,
-          }),
-        });
+        await apiCall("/api/user/cancel-service",
+          "POST", {
+          serviceType: userServiceData.serviceType,
+          roomId: userServiceData.roomId,
+        }
+        )
       }
 
       socketRef.current?.close();
@@ -135,11 +115,36 @@ export const SessionProvider = ({ children }) => {
       setShowQueueModal(false);
       setIsSocketConnected(false);
 
-      window.location.href = "/";
+      window.history.back();
     } catch (err) {
       console.error(err);
     }
   };
+
+  const checkStatus = async () => {
+    try {
+      console.log("CAlling checkStatus")
+      const checkStatus = await apiCall("api/user/service-active-status", 'POST', {
+        serviceType: userServiceData.serviceType,
+        roomId: userServiceData.roomId,
+      }
+      )
+      if (checkStatus?.data) {
+        setModalVisible(true);
+        setGroupId(checkStatus.data.serviceToken);
+      } else if (shouldClearIfNotFound) {
+        // Onl if explicitly told to (e.g., on initial mount, not on navigation)
+        setModalVisible(false);
+      }
+    } catch (error) {
+      console.log('🚀 ~ checkServiceStatus ~ error:', error);
+    }
+  };
+
+  useEffect(() => {
+    checkStatus();
+  }, []);
+
 
   return (
     <SessionContext.Provider
@@ -156,6 +161,8 @@ export const SessionProvider = ({ children }) => {
         isSocketConnected,
         formData,
         setUserData,
+        sessionToken,
+        setSessionToken,
       }}
     >
       {children}

@@ -14,8 +14,8 @@ export async function POST(request) {
 
     // Get token from cookies
     const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value; 
-    
+    const token = cookieStore.get("token")?.value;
+
     // Authentication check
     if (!token) {
       return Response.json(
@@ -88,14 +88,12 @@ export async function POST(request) {
 
 
     // Handle external API errors
-    if (!response.ok) {
+    if (data.statusCode == 400) {
       return Response.json(
         {
-          statusCode: response.status,
-          message: data?.message || "Service request failed",
-          data: null,
-        },
-        { status: response.status }
+          statusCode: 400,
+          message: data.message,
+        }
       );
     }
 

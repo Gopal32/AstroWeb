@@ -141,13 +141,31 @@ function AstroProfileContent() {
                                 <div className="text-xs md:text-sm text-foreground/80 font-medium">{formattedConsults} Consultations</div>
                             </div>
                             {astro.status === "online" && (
-                                <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center" title="Online">
-                                    <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+                                <div className="group relative w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center transition-all duration-300 hover:scale-105">
+
+                                    {/* Pulse ring */}
+                                    <span className="absolute w-3 h-3 rounded-full bg-emerald-500 animate-ping"></span>
+
+                                    {/* Dot */}
+                                    <span className="w-3 h-3 rounded-full bg-emerald-500 relative"></span>
+
+                                    {/* Tooltip */}
+                                    <div className="absolute bottom-12 scale-0 group-hover:scale-100 transition-transform duration-200 bg-black text-white text-xs px-2 py-1 rounded-md">
+                                        Online
+                                    </div>
                                 </div>
                             )}
+
                             {astro.status === "busy" && (
-                                <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center" title="Busy">
-                                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                                <div className="group relative w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center transition-all duration-300 hover:scale-105">
+
+                                    {/* Dot */}
+                                    <span className="w-3 h-3 rounded-full bg-red-500"></span>
+
+                                    {/* Tooltip */}
+                                    <div className="absolute bottom-12 scale-0 group-hover:scale-100 transition-transform duration-200 bg-black text-white text-xs px-2 py-1 rounded-md">
+                                        Busy
+                                    </div>
                                 </div>
                             )}
                         </div>

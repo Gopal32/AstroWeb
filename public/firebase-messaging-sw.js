@@ -14,36 +14,34 @@ firebase.initializeApp({
 //  Initialize messaging
 const messaging = firebase.messaging();
 
-//  Handle background messages
-messaging.onBackgroundMessage(function (payload) {
-  console.log("[firebase-messaging-sw.js] Received:", payload);
+// ✅ Background message
+messaging.onBackgroundMessage((payload) => {
+  console.log("[SW] Background message:", payload);
 
-  const notificationTitle = payload.notification?.title || "New Notification";
-  const notificationOptions = {
-    body: payload.notification?.body || "You have a new message",
-    icon: "/icons/icon-192.png", // put your icon in /public/icons
-    data: {
-      url: payload.data?.url || "/", // redirect on click
-    },
-  };
-
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  self.registration.showNotification(
+    payload.notification?.title || "New Notification",
+    {
+      body: payload.notification?.body,
+      icon: "/icons/icon-192.png",
+      data: payload.data,
+    }
+  );
 });
 
-//  Handle notification click
+// ✅ Click handling
 self.addEventListener("notificationclick", function (event) {
   event.notification.close();
 
-  const targetUrl = event.notification.data?.url || "/";
+  const url = event.notification.data?.url || "/";
 
   event.waitUntil(
-    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        if (client.url === targetUrl && "focus" in client) {
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientsArr) => {
+      for (const client of clientsArr) {
+        if (client.url === url && "focus" in client) {
           return client.focus();
         }
       }
-      return clients.openWindow(targetUrl);
+      return clients.openWindow(url);
     })
   );
 });

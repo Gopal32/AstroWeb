@@ -199,6 +199,12 @@ function UserProfileContent({ searchParams }) {
             //  1. CALL SERVICE API
             const res = await apiCall("/api/user/user-details", "POST", payload);
             const result = res;
+            
+            if(result?.statusCode === 400){
+                setError(result?.message);
+                setIsLoading(false);
+                return;
+            }
 
             if (result?.statusCode === 200) {
 

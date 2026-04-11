@@ -19,7 +19,6 @@ const ChatPage = () => {
   } = useSession();
 
   const { user } = useAuth();
-  console.log("Uaser in chat:", user);
   const token = user?.token;
 
   const [input, setInput] = useState("");
