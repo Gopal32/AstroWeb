@@ -17,7 +17,7 @@ export const SessionProvider = ({ children }) => {
   const [isSocketConnected, setIsSocketConnected] = useState(false);
   const [sessionToken, setSessionToken] = useState(null);
 
-  // 🔌 CONNECT SOCKET (USE SESSION TOKEN ONLY)
+  // CONNECT SOCKET (USE SESSION TOKEN ONLY)
 
   const connectSocket = useCallback((sessionToken) => {
     if (isSocketConnected || socketRef.current) return;
@@ -34,7 +34,7 @@ export const SessionProvider = ({ children }) => {
       socket.send(
         JSON.stringify({
           event: "joinUserRoom",
-          msg: sessionToken, // 🔥 CORRECT TOKEN
+          msg: sessionToken, 
         })
       );
 
@@ -44,10 +44,10 @@ export const SessionProvider = ({ children }) => {
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
 
-      console.log("📩 Incoming:", data);
+      console.log(" Incoming:", data);
 
       if (data.event === "close") {
-        handleExit(); // 🔥 IMPORTANT
+        handleExit(); 
       }
 
       if (data.event === "message" || data.event === "success") {
@@ -64,7 +64,7 @@ export const SessionProvider = ({ children }) => {
     };
 
     socket.onclose = () => {
-      console.log("❌ Socket Disconnected");
+      console.log("Socket Disconnected");
 
       setIsSocketConnected(false);
       socketRef.current = null;
@@ -72,7 +72,7 @@ export const SessionProvider = ({ children }) => {
     };
   }, [isSocketConnected]);
 
-  // 💬 SEND MESSAGE
+  //  SEND MESSAGE
   const sendMessage = (text) => {
     if (!socketRef.current || !groupId) return;
 
@@ -93,10 +93,10 @@ export const SessionProvider = ({ children }) => {
     ]);
   };
 
-  // ❌ EXIT
+  //  EXIT
   const handleExit = async () => {
     try {
-      console.log("🚪 Exiting session...");
+      console.log(" Exiting session...");
 
       if (userServiceData) {
         await apiCall("/api/user/cancel-service",
